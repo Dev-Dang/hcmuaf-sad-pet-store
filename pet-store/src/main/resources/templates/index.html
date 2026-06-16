@@ -2,10 +2,19 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Pet Store - Hello</title>
+    <title>Pet Store</title>
 </head>
 <body>
-    <!-- Thymeleaf sẽ lấy dữ liệu từ biến message ở Controller -->
-    <h1>HCMUAF - System Analysis and Design (SAD) Project</h1>
+<h1>Chào mừng đến Pet Store</h1>
+<p>HCMUAF - System Analysis and Design (SAD) Project</p>
+
+<div th:if="${session.currentUser != null}">
+    <p>Xin chào, <strong th:text="${session.currentUser.displayName}"></strong>!</p>
+    <a th:href="@{/auth/logout}">Đăng xuất</a>
+</div>
+<div th:unless="${session.currentUser != null}">
+    <a th:href="@{/auth/login}">Đăng nhập</a> |
+    <a th:href="@{/auth/register}">Đăng ký</a>
+</div>
 </body>
 </html>

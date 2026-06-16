@@ -6,8 +6,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class HelloController {
 
+    @GetMapping("/")
+    public String home() {
+        return "index";
+    }
+
     @GetMapping("/hello")
     public String helloPage() {
-        return "index";  // mapping đến file index.html trong thư mục resources/templates
+        return "index";
     }
 }

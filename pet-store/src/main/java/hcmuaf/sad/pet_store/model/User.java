@@ -46,8 +46,10 @@ public class User extends BaseEntity {
     // ─── TODO: UC-2/3/4 ───────────────────────────────────────────────────────
 
     public static User findActiveByEmail(String email) {
-        // TODO: UC-2/3/4
-        throw new UnsupportedOperationException("TODO: UC-2/3/4");
+        List<User> results = DBUtils.jdbc().query(
+                "SELECT * FROM users WHERE email = ? AND is_current = true AND is_deleted = false",
+                ROW_MAPPER, email);
+        return results.isEmpty() ? null : results.get(0);
     }
 
     public static User findActiveByUserId(String userId) {
@@ -62,8 +64,17 @@ public class User extends BaseEntity {
 
     @Override
     public void softDelete() {
-        // TODO: SCD tombstone
-        throw new UnsupportedOperationException("TODO: softDelete");
+        LocalDateTime now = LocalDateTime.now();
+        DBUtils.tx().executeWithoutResult(status -> {
+            DBUtils.jdbc().update(
+                    "UPDATE users SET is_current = false, effective_to = ? WHERE user_code = ? AND is_current = true",
+                    now, userCode);
+            DBUtils.jdbc().update("""
+                    INSERT INTO users (user_code, email, display_name, role, effective_from, is_current, is_deleted, created_at)
+                    VALUES (?, ?, ?, ?, ?, true, true, ?)
+                    """,
+                    userCode, email, displayName, role.name(), now, now);
+        });
     }
 
     // ─── RowMapper ────────────────────────────────────────────────────────────

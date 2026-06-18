@@ -122,16 +122,17 @@ class RegisterControllerTest {
     // ── [1.1.5 EF1] email đã tồn tại ─────────────────────────────────────────
 
     @Test
-    void register_existingEmail_shouldRenderErrorView() throws Exception {
-        // [1.1.5 EF1] Email đã tồn tại → AppException(EMAIL_ALREADY_EXISTS)
+    void register_existingEmail_shouldRenderFormWithInlineError() throws Exception {
+        // [1.1.5 EF1] Email đã tồn tại → AppException(EMAIL_ALREADY_EXISTS) → inline trên form
         new User(UUID.randomUUID().toString(), "existing@test.com", "Existing User", UserRole.CUSTOMER).insert();
 
         mockMvc.perform(post("/auth/register")
                         .param("displayName", "Another User")
                         .param("email", "existing@test.com")
                         .param("password", "pass1234"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/error-page"));
+                .andExpect(status().isOk())
+                .andExpect(view().name("auth/register"))
+                .andExpect(model().attributeExists("error"));
     }
 
     // ── [1.1.6–1.1.8] NF — happy path ────────────────────────────────────────

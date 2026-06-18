@@ -52,6 +52,13 @@ public class User extends BaseEntity {
         return results.isEmpty() ? null : results.get(0);
     }
 
+    public static User findActiveByUserCode(String userCode) {
+        List<User> results = DBUtils.jdbc().query(
+                "SELECT * FROM users WHERE user_code = ? AND is_current = true AND is_deleted = false",
+                ROW_MAPPER, userCode);
+        return results.isEmpty() ? null : results.get(0);
+    }
+
     public static User findActiveByUserId(String userId) {
         // TODO: UC-2/3
         throw new UnsupportedOperationException("TODO: UC-2/3");

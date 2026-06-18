@@ -3,11 +3,21 @@ package hcmuaf.sad.pet_store.exception;
 import lombok.Getter;
 
 @Getter
-public class AppException extends RuntimeException {
+public abstract class AppException extends RuntimeException {
     private final ErrorCode errorCode;
+    private Integer httpStatus;
 
-    public AppException(ErrorCode errorCode) {
-        super(errorCode.name());
+    protected AppException(ErrorCode errorCode) {
+        this(errorCode, null);
+    }
+
+    protected AppException(ErrorCode errorCode, Throwable cause) {
+        super(errorCode.name(), cause);
         this.errorCode = errorCode;
+    }
+
+    public AppException withStatus(int status) {
+        this.httpStatus = status;
+        return this;
     }
 }

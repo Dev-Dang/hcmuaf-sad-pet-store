@@ -5,7 +5,7 @@ import hcmuaf.sad.pet_store.util.DBUtils;
 import hcmuaf.sad.pet_store.model.enums.EntityType;
 import hcmuaf.sad.pet_store.util.PasswordUtils;
 import hcmuaf.sad.pet_store.dto.request.RegisterRequest;
-import hcmuaf.sad.pet_store.exception.AppException;
+import hcmuaf.sad.pet_store.exception.BusinessException;
 import hcmuaf.sad.pet_store.exception.ErrorCode;
 import hcmuaf.sad.pet_store.mapper.UserMapper;
 import hcmuaf.sad.pet_store.model.User;
@@ -50,25 +50,29 @@ public class RegisterController {
             return "auth/register";
         }
 
-        // [1.1.5] Kiểm tra email chưa tồn tại trong hệ thống
-        if (User.existsByEmail(request.getEmail())) {
-            // EF2 — Email đã tồn tại trong hệ thống
-            throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
-        }
-
         // Chuẩn bị dữ liệu tài khoản mới
         String userCode = BusinessKeyGenerator.next(EntityType.CUSTOMER);
         String secretHash = PasswordUtils.hash(request.getPassword());
-
-        // [1.1.6] Tạo tài khoản Customer mới (và EMAIL credential tương ứng)
         User newUser = new User(userCode, request.getEmail(), request.getDisplayName(), UserRole.CUSTOMER);
         UserCredential newCredential = new UserCredential(userCode, ProviderType.EMAIL, null, secretHash);
 
-        // Transaction
-        DBUtils.tx().executeWithoutResult(status -> {
-            newUser.insert();
-            newCredential.insert();
-        });
+        try {
+            // [1.1.5] Kiểm tra email chưa tồn tại trong hệ thống
+            if (User.existsByEmail(request.getEmail())) {
+                throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
+            }
+
+            // [1.1.6] Tạo tài khoản Customer mới (và EMAIL credential tương ứng)
+            DBUtils.tx().executeWithoutResult(status -> {
+                newUser.insert();
+                newCredential.insert();
+            });
+        } catch (BusinessException e) {
+            // [1.3.1] Không tạo tài khoản, hiển thị lỗi Email đã được sử dụng
+            model.addAttribute("error", e.getErrorCode().getMessage());
+            model.addAttribute("registerRequest", new RegisterRequest());
+            return "auth/register";
+        }
 
         // [1.1.7] Tạo phiên đăng nhập Customer
         session.setAttribute("userCode", userCode);

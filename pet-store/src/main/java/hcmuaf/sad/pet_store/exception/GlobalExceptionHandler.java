@@ -17,11 +17,10 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    // Lỗi nghiệp vụ có kiểm soát — lưu message vào session, redirect sang GET /error (PRG)
-    // [1.3.1 / 2.4.1] Hiển thị thông báo lỗi nghiệp vụ tương ứng
+    // Lỗi nghiệp vụ không được xử lý ở Controller (SystemException) — lưu message vào session, redirect sang GET /error (PRG)
     @ExceptionHandler(AppException.class)
     public String handleAppException(AppException ex, HttpServletRequest request) {
-        log.warn("AppException [{}]: {}", ex.getErrorCode(), ex.getErrorCode().getMessage());
+        log.warn("AppException [{}]", ex.getErrorCode(), ex);
         request.getSession().setAttribute("errorMessage", ex.getErrorCode().getMessage());
         return "redirect:/error-page";
     }

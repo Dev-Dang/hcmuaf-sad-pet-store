@@ -109,17 +109,18 @@ class LoginControllerTest {
 
     @Test
     void login_nonExistentEmail_shouldRenderErrorView() throws Exception {
-        // [2.4.1] EF2 — Email hoặc mật khẩu không đúng
+        // [2.4.1] EF2 — Email hoặc mật khẩu không đúng → hiện lỗi inline trên form
         mockMvc.perform(post("/login/email")
                         .param("email", "nonexistent@test.com")
                         .param("password", "pass1234"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/error-page"));
+                .andExpect(status().isOk())
+                .andExpect(view().name("auth/login"))
+                .andExpect(model().attributeExists("error"));
     }
 
     @Test
     void login_wrongPassword_shouldRenderErrorView() throws Exception {
-        // [2.4.1] EF2 — Email hoặc mật khẩu không đúng
+        // [2.4.1] EF2 — Email hoặc mật khẩu không đúng → hiện lỗi inline trên form
         String userCode = BusinessKeyGenerator.next(EntityType.CUSTOMER);
         new User(userCode, "user@test.com", "Test User", UserRole.CUSTOMER).insert();
         new UserCredential(userCode, ProviderType.EMAIL, null, PasswordUtils.hash("correct1234")).insert();
@@ -127,13 +128,14 @@ class LoginControllerTest {
         mockMvc.perform(post("/login/email")
                         .param("email", "user@test.com")
                         .param("password", "wrong1234"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/error-page"));
+                .andExpect(status().isOk())
+                .andExpect(view().name("auth/login"))
+                .andExpect(model().attributeExists("error"));
     }
 
     @Test
     void login_userDeletedSoftly_shouldRenderErrorView() throws Exception {
-        // [2.4.1] EF2 — User bị xóa mềm không thể đăng nhập
+        // [2.4.1] EF2 — User bị xóa mềm không thể đăng nhập → hiện lỗi inline trên form
         String userCode = BusinessKeyGenerator.next(EntityType.CUSTOMER);
         new User(userCode, "deleted@test.com", "Deleted User", UserRole.CUSTOMER).insert();
         new UserCredential(userCode, ProviderType.EMAIL, null, PasswordUtils.hash("pass1234")).insert();
@@ -144,8 +146,9 @@ class LoginControllerTest {
         mockMvc.perform(post("/login/email")
                         .param("email", "deleted@test.com")
                         .param("password", "pass1234"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/error-page"));
+                .andExpect(status().isOk())
+                .andExpect(view().name("auth/login"))
+                .andExpect(model().attributeExists("error"));
     }
 
     // ── [2.1.5–2.1.8] NF — happy path ──────────────────────────────────────

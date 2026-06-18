@@ -6,5 +6,5 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class GoogleCredential implements AuthCredential {
-    private final String authorizationCode;
+    private final String idToken;
 }

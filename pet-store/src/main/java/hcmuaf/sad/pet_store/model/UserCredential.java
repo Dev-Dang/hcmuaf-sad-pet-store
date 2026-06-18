@@ -60,13 +60,16 @@ public class UserCredential {
     }
 
     public static UserCredential findByProviderUserId(ProviderType provider, String providerUserId) {
-        // TODO: UC-3
-        throw new UnsupportedOperationException("TODO: UC-3");
+        List<UserCredential> results = DBUtils.jdbc().query(
+                "SELECT * FROM user_credential WHERE provider = ? AND provider_user_id = ?",
+                ROW_MAPPER, provider.name(), providerUserId);
+        return results.isEmpty() ? null : results.get(0);
     }
 
-    public static java.util.List<UserCredential> findByUserCode(String userCode) {
-        // TODO: UC-3
-        throw new UnsupportedOperationException("TODO: UC-3");
+    public static List<UserCredential> findByUserCode(String userCode) {
+        return DBUtils.jdbc().query(
+                "SELECT * FROM user_credential WHERE user_code = ?",
+                ROW_MAPPER, userCode);
     }
 
     public void updateSecretHash(String hash) {

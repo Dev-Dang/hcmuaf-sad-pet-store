@@ -1,8 +1,10 @@
 package hcmuaf.sad.pet_store.controller.auth;
 
+import hcmuaf.sad.pet_store.config.GoogleOAuthConfig;
 import hcmuaf.sad.pet_store.dto.auth.EmailCredential;
 import hcmuaf.sad.pet_store.dto.auth.GoogleCredential;
 import hcmuaf.sad.pet_store.dto.request.LoginRequest;
+import hcmuaf.sad.pet_store.exception.BusinessException;
 import hcmuaf.sad.pet_store.model.enums.UserRole;
 import hcmuaf.sad.pet_store.model.policy.SessionPolicy;
 import jakarta.servlet.http.HttpSession;
@@ -35,8 +37,9 @@ public class LoginController {
             return "redirect:/";
         }
 
-        // [2.1.2] Hiển thị form đăng nhập
+        // [2.1.2 / 3.1.2] Hiển thị form đăng nhập
         model.addAttribute("loginRequest", new LoginRequest());
+        model.addAttribute("googleClientId", GoogleOAuthConfig.getClientId());
         return "auth/login";
     }
 
@@ -44,6 +47,7 @@ public class LoginController {
     public String loginEmail(@Valid @ModelAttribute("loginRequest") LoginRequest request,
                              BindingResult bindingResult,
                              HttpSession session,
+                             Model model,
                              @RequestParam(value = "redirect", required = false) String redirectUrl) {
 
         // [2.1.3] Nhập email, mật khẩu và gửi yêu cầu đăng nhập
@@ -58,7 +62,15 @@ public class LoginController {
 
         // [2.1.5] Kiểm tra email và mật khẩu với tài khoản trong hệ thống
         EmailCredential credential = new EmailCredential(request.getEmail(), request.getPassword());
-        AuthenticatedUser authUser = emailAuthProvider.authenticate(credential);
+        AuthenticatedUser authUser;
+        try {
+            authUser = emailAuthProvider.authenticate(credential);
+        } catch (BusinessException e) {
+            // EF2 - Email hoặc mật khẩu không đúng
+            // [2.4.1] Hiển thị thông báo lỗi chung
+            model.addAttribute("error", e.getErrorCode().getMessage());
+            return "auth/login";
+        }
 
         // [2.1.7] Tạo phiên đăng nhập theo role
         establishSession(session, authUser);
@@ -81,7 +93,7 @@ public class LoginController {
         if (redirect != null && !redirect.isBlank()) {
             boolean isAdminPath = redirect.startsWith("/admin");
             // AF1 — trang đích không phù hợp role
-            // [2.2.1] Đặt lại trang đích về mặc định theo role
+            // [2.2.1 / 3.3.1] Đặt lại trang đích về mặc định theo role
             if (isAdminPath != (role == UserRole.ADMIN)) {
                 return role == UserRole.ADMIN ? "/admin/" : "/";
             }
@@ -91,8 +103,28 @@ public class LoginController {
     }
 
     @GetMapping("/login/google/callback")
-    public String googleCallback() {
-        // TODO: UC-3
-        throw new UnsupportedOperationException("TODO: UC-3");
+    public String googleCallback(
+            @RequestParam String credential,
+            @RequestParam(value = "redirect", required = false) String redirectUrl,
+            HttpSession session,
+            Model model) {
+        AuthenticatedUser authUser;
+        try {
+            authUser = googleAuthProvider.authenticate(new GoogleCredential(credential));
+        } catch (BusinessException e) {
+            // [3.5.1 / 3.6.1] Hiển thị lỗi Đăng nhập Google không thành công
+            model.addAttribute("error", e.getErrorCode().getMessage());
+            model.addAttribute("loginRequest", new LoginRequest());
+            return "auth/login";
+        }
+
+        // [3.1.8] Tạo phiên đăng nhập
+        establishSession(session, authUser);
+
+        // [3.1.9] Xác định trang đích sau đăng nhập
+        String destination = resolveDestination(redirectUrl, authUser.getRole());
+
+        // [3.1.10] Điều hướng Actor đến trang đích
+        return "redirect:" + resolveDestination(redirectUrl, authUser.getRole());
     }
 }

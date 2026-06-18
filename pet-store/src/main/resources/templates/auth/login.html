@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Đăng nhập</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 <h2>Đăng nhập</h2>
+
+<div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
 <form th:action="@{/login/email}" th:object="${loginRequest}" method="post">
     <div>
         <label>Email</label>
@@ -17,8 +21,22 @@
         <input type="password" th:field="*{password}" />
         <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
     </div>
-    <button type="submit">Đăng nhập</button>
+    <button type="submit">Đăng nhập bằng Email</button>
 </form>
+
+<div id="g_id_onload"
+     th:data-client_id="${googleClientId}"
+     data-callback="handleGoogleSignIn"
+     data-auto_prompt="false">
+</div>
+<div class="g_id_signin" data-type="standard"></div>
+
+<script>
+function handleGoogleSignIn(response) {
+    window.location.href = '/login/google/callback?credential=' + response.credential;
+}
+</script>
+
 <p>Chưa có tài khoản? <a th:href="@{/auth/register}">Đăng ký</a></p>
 </body>
 </html>

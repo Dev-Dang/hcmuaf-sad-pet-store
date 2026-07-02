@@ -29,7 +29,9 @@ public class LoginController {
     }
 
     @GetMapping("/auth/login")
-    public String showLogin(HttpSession session, Model model) {
+    public String showLogin(HttpSession session,
+                            Model model,
+                            @RequestParam(value = "expired", required = false) boolean expired) {
         // [2.1.1] Truy cập trang đăng nhập hoặc chức năng yêu cầu đăng nhập
 
         // Redirect nếu user đã đăng nhập
@@ -40,6 +42,9 @@ public class LoginController {
         // [2.1.2 / 3.1.2] Hiển thị form đăng nhập
         model.addAttribute("loginRequest", new LoginRequest());
         model.addAttribute("googleClientId", GoogleOAuthConfig.getClientId());
+        if (expired) {
+            model.addAttribute("error", "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.");
+        }
         return "auth/login";
     }
 

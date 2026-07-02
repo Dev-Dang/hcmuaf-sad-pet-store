@@ -10,7 +10,9 @@
 
 <div th:if="${session.currentUser != null}">
     <p>Xin chào, <strong th:text="${session.currentUser.displayName}"></strong>!</p>
-    <a th:href="@{/auth/logout}">Đăng xuất</a>
+    <form th:action="@{/logout}" method="post">
+        <button type="submit">Đăng xuất</button>
+    </form>
 </div>
 <div th:unless="${session.currentUser != null}">
     <a th:href="@{/auth/login}">Đăng nhập</a> |

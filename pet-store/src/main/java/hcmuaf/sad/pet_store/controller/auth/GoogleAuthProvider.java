@@ -63,14 +63,16 @@ public class GoogleAuthProvider implements AuthProvider<GoogleCredential> {
         }
     }
 
+    // [3.1.7] Tìm tài khoản liên kết Google
     private User resolveCustomerByGoogleIdentity(String googleSub, String email, String displayName) {
+        // Tìm bản ghi từ Database
         UserCredential stored = UserCredential.findByProviderUserId(ProviderType.GOOGLE, googleSub);
 
-        // [3.1.7] Tìm tài khoản Customer theo Google sub đã liên kết
         if (stored != null) {
             User user = User.findActiveByUserCode(stored.getUserCode());
             // credential còn nhưng user bị xoá/inactive → lỗi nghiệp vụ
-            if (user == null) throw new BusinessException(ErrorCode.GOOGLE_ACCESS_DENIED);
+            if (user == null)
+                throw new BusinessException(ErrorCode.GOOGLE_ACCESS_DENIED);
             return user;
         }
 

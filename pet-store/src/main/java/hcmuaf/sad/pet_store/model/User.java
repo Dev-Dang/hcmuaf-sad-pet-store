@@ -1,11 +1,15 @@
 package hcmuaf.sad.pet_store.model;
 
+import hcmuaf.sad.pet_store.exception.ErrorCode;
+import hcmuaf.sad.pet_store.exception.SystemException;
 import hcmuaf.sad.pet_store.util.DBUtils;
 import hcmuaf.sad.pet_store.model.base.BaseEntity;
 import hcmuaf.sad.pet_store.model.enums.UserRole;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.transaction.TransactionException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,35 +32,51 @@ public class User extends BaseEntity {
     // ─── UC-1 ─────────────────────────────────────────────────────────────────
 
     public static boolean existsByEmail(String email) {
-        Integer count = DBUtils.jdbc().queryForObject(
-                "SELECT COUNT(*) FROM users WHERE email = ? AND is_current = true",
-                Integer.class, email);
-        return count != null && count > 0;
+        try {
+            Integer count = DBUtils.jdbc().queryForObject(
+                    "SELECT COUNT(*) FROM users WHERE email = ? AND is_current = true",
+                    Integer.class, email);
+            return count != null && count > 0;
+        } catch (DataAccessException e) {
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
+        }
     }
 
     public void insert() {
-        LocalDateTime now = LocalDateTime.now();
-        DBUtils.jdbc().update("""
-                INSERT INTO users (user_code, email, display_name, role, effective_from, is_current, is_deleted, created_at)
-                VALUES (?, ?, ?, ?, ?, true, false, ?)
-                """,
-                userCode, email, displayName, role.name(), now, now);
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            DBUtils.jdbc().update("""
+                    INSERT INTO users (user_code, email, display_name, role, effective_from, is_current, is_deleted, created_at)
+                    VALUES (?, ?, ?, ?, ?, true, false, ?)
+                    """,
+                    userCode, email, displayName, role.name(), now, now);
+        } catch (DataAccessException e) {
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
+        }
     }
 
     // ─── TODO: UC-2/3/4 ───────────────────────────────────────────────────────
 
     public static User findActiveByEmail(String email) {
-        List<User> results = DBUtils.jdbc().query(
-                "SELECT * FROM users WHERE email = ? AND is_current = true AND is_deleted = false",
-                ROW_MAPPER, email);
-        return results.isEmpty() ? null : results.get(0);
+        try {
+            List<User> results = DBUtils.jdbc().query(
+                    "SELECT * FROM users WHERE email = ? AND is_current = true AND is_deleted = false",
+                    ROW_MAPPER, email);
+            return results.isEmpty() ? null : results.get(0);
+        } catch (DataAccessException e) {
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
+        }
     }
 
     public static User findActiveByUserCode(String userCode) {
-        List<User> results = DBUtils.jdbc().query(
-                "SELECT * FROM users WHERE user_code = ? AND is_current = true AND is_deleted = false",
-                ROW_MAPPER, userCode);
-        return results.isEmpty() ? null : results.get(0);
+        try {
+            List<User> results = DBUtils.jdbc().query(
+                    "SELECT * FROM users WHERE user_code = ? AND is_current = true AND is_deleted = false",
+                    ROW_MAPPER, userCode);
+            return results.isEmpty() ? null : results.get(0);
+        } catch (DataAccessException e) {
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
+        }
     }
 
     public static User findActiveByUserId(String userId) {
@@ -71,17 +91,21 @@ public class User extends BaseEntity {
 
     @Override
     public void softDelete() {
-        LocalDateTime now = LocalDateTime.now();
-        DBUtils.tx().executeWithoutResult(status -> {
-            DBUtils.jdbc().update(
-                    "UPDATE users SET is_current = false, effective_to = ? WHERE user_code = ? AND is_current = true",
-                    now, userCode);
-            DBUtils.jdbc().update("""
-                    INSERT INTO users (user_code, email, display_name, role, effective_from, is_current, is_deleted, created_at)
-                    VALUES (?, ?, ?, ?, ?, true, true, ?)
-                    """,
-                    userCode, email, displayName, role.name(), now, now);
-        });
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            DBUtils.tx().executeWithoutResult(status -> {
+                DBUtils.jdbc().update(
+                        "UPDATE users SET is_current = false, effective_to = ? WHERE user_code = ? AND is_current = true",
+                        now, userCode);
+                DBUtils.jdbc().update("""
+                        INSERT INTO users (user_code, email, display_name, role, effective_from, is_current, is_deleted, created_at)
+                        VALUES (?, ?, ?, ?, ?, true, true, ?)
+                        """,
+                        userCode, email, displayName, role.name(), now, now);
+            });
+        } catch (DataAccessException | TransactionException e) {
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
+        }
     }
 
     // ─── RowMapper ────────────────────────────────────────────────────────────

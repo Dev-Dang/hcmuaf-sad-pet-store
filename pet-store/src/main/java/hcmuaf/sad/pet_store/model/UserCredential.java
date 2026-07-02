@@ -1,9 +1,12 @@
 package hcmuaf.sad.pet_store.model;
 
+import hcmuaf.sad.pet_store.exception.ErrorCode;
+import hcmuaf.sad.pet_store.exception.SystemException;
 import hcmuaf.sad.pet_store.util.DBUtils;
 import hcmuaf.sad.pet_store.model.enums.ProviderType;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.time.LocalDateTime;
@@ -29,11 +32,15 @@ public class UserCredential {
     // ─── UC-1 ─────────────────────────────────────────────────────────────────
 
     public void insert() {
-        DBUtils.jdbc().update("""
-                INSERT INTO user_credential (user_code, provider, provider_user_id, secret_hash, linked_at)
-                VALUES (?, ?, ?, ?, ?)
-                """,
-                userCode, provider.name(), providerUserId, secretHash, LocalDateTime.now());
+        try {
+            DBUtils.jdbc().update("""
+                    INSERT INTO user_credential (user_code, provider, provider_user_id, secret_hash, linked_at)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    userCode, provider.name(), providerUserId, secretHash, LocalDateTime.now());
+        } catch (DataAccessException e) {
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
+        }
     }
 
     // ─── RowMapper ────────────────────────────────────────────────────────────
@@ -53,23 +60,35 @@ public class UserCredential {
     // ─── UC-2/4 ───────────────────────────────────────────────────────────────
 
     public static UserCredential findByUserCodeAndProvider(String userCode, ProviderType provider) {
-        List<UserCredential> results = DBUtils.jdbc().query(
-                "SELECT * FROM user_credential WHERE user_code = ? AND provider = ?",
-                ROW_MAPPER, userCode, provider.name());
-        return results.isEmpty() ? null : results.get(0);
+        try {
+            List<UserCredential> results = DBUtils.jdbc().query(
+                    "SELECT * FROM user_credential WHERE user_code = ? AND provider = ?",
+                    ROW_MAPPER, userCode, provider.name());
+            return results.isEmpty() ? null : results.get(0);
+        } catch (DataAccessException e) {
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
+        }
     }
 
     public static UserCredential findByProviderUserId(ProviderType provider, String providerUserId) {
-        List<UserCredential> results = DBUtils.jdbc().query(
-                "SELECT * FROM user_credential WHERE provider = ? AND provider_user_id = ?",
-                ROW_MAPPER, provider.name(), providerUserId);
-        return results.isEmpty() ? null : results.get(0);
+        try {
+            List<UserCredential> results = DBUtils.jdbc().query(
+                    "SELECT * FROM user_credential WHERE provider = ? AND provider_user_id = ?",
+                    ROW_MAPPER, provider.name(), providerUserId);
+            return results.isEmpty() ? null : results.get(0);
+        } catch (DataAccessException e) {
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
+        }
     }
 
     public static List<UserCredential> findByUserCode(String userCode) {
-        return DBUtils.jdbc().query(
-                "SELECT * FROM user_credential WHERE user_code = ?",
-                ROW_MAPPER, userCode);
+        try {
+            return DBUtils.jdbc().query(
+                    "SELECT * FROM user_credential WHERE user_code = ?",
+                    ROW_MAPPER, userCode);
+        } catch (DataAccessException e) {
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
+        }
     }
 
     public void updateSecretHash(String hash) {

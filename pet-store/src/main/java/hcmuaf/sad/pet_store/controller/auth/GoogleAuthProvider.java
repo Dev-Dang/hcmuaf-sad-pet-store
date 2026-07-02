@@ -59,7 +59,7 @@ public class GoogleAuthProvider implements AuthProvider<GoogleCredential> {
                 throw new BusinessException(ErrorCode.GOOGLE_AUTH_FAILED);
             return idToken.getPayload();
         } catch (GeneralSecurityException | IOException e) {
-            throw new BusinessException(ErrorCode.GOOGLE_AUTH_FAILED, e);
+            throw new SystemException(ErrorCode.GOOGLE_AUTH_FAILED, e);
         }
     }
 

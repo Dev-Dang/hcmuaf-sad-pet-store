@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng nhập - Pet Store</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .auth-container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { text-align: center; color: #1f2937; margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; color: #4b5563; font-size: 0.875rem; }
+        input[type="email"], input[type="password"] { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
+        input[type="email"]:focus, input[type="password"]:focus { outline: none; border-color: #3b82f6; ring: 2px #3b82f6; }
+        button { width: 100%; padding: 0.75rem; background-color: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background-color: #2563eb; }
+        .error-message { color: #dc2626; font-size: 0.875rem; margin-bottom: 1rem; text-align: center; }
+        .success-message { color: #16a34a; font-size: 0.875rem; margin-bottom: 1rem; text-align: center; }
+        .links { text-align: center; margin-top: 1rem; font-size: 0.875rem; }
+        .links a { color: #3b82f6; text-decoration: none; }
+        .links a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <h2>Đăng nhập</h2>
+        
+        <div th:if="${param.error}" class="error-message">
+            Email hoặc mật khẩu không đúng.
+        </div>
+        
+        <div th:if="${success}" class="success-message" th:text="${success}"></div>
+
+        <form th:action="@{/login}" method="post">
+            <div class="form-group">
+                <label for="username">Email</label>
+                <input type="email" id="username" name="username" required placeholder="Nhập email của bạn">
+            </div>
+            <div class="form-group">
+                <label for="password">Mật khẩu</label>
+                <input type="password" id="password" name="password" required placeholder="Nhập mật khẩu">
+            </div>
+            <button type="submit">Đăng nhập</button>
+        </form>
+        <div class="links">
+            <p>Chưa có tài khoản? <a th:href="@{/register}">Đăng ký ngay</a></p>
+            <p><a th:href="@{/}">Quay lại trang chủ</a></p>
+        </div>
+    </div>
+</body>
+</html>

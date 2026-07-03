@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sản phẩm - Pet Store</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #f8f9fb; color: #1a1a2e; }
+
+        /* ── Navbar ── */
+        .navbar {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 0 2rem; height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .navbar-brand { font-size: 1.4rem; font-weight: 700; color: #e2b96f; text-decoration: none; }
+        .navbar-brand span { color: #fff; }
+        .navbar-nav { display: flex; align-items: center; gap: 1rem; }
+        .nav-link { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.875rem; font-weight: 500; padding: 0.4rem 0.8rem; border-radius: 6px; transition: all 0.2s; }
+        .nav-link:hover, .nav-link.active { color: #fff; background: rgba(255,255,255,0.1); }
+        .btn-logout { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-family: inherit; transition: all 0.2s; }
+        .btn-logout:hover { background: rgba(255,255,255,0.2); }
+
+        /* ── Cart Badge ── */
+        .cart-link { position: relative; }
+        .cart-badge { position: absolute; top: -6px; right: -6px; background: #e2b96f; color: #1a1a2e; font-size: 0.65rem; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+        /* ── Page Layout ── */
+        .page-container { max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem; display: grid; grid-template-columns: 240px 1fr; gap: 2rem; }
+        @media (max-width: 900px) { .page-container { grid-template-columns: 1fr; } }
+        
+        .page-header { margin-bottom: 2rem; grid-column: 1 / -1; }
+        .page-title { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .page-subtitle { color: #6b7280; font-size: 0.9rem; }
+
+        /* ── Sidebar (Categories) ── */
+        .sidebar { background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); align-self: start; }
+        .sidebar-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 1rem; color: #1a1a2e; }
+        .category-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+        .category-item { 
+            padding: 0.6rem 1rem; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 0.9rem; 
+            color: #4b5563; 
+            transition: all 0.2s; 
+        }
+        .category-item:hover { background: #f3f4f6; color: #1a1a2e; }
+        .category-item.active { background: #1a1a2e; color: #e2b96f; font-weight: 600; }
+
+        /* ── Main Content ── */
+        .main-content { min-width: 0; }
+
+        /* ── Search ── */
+        .search-bar {
+            display: flex; gap: 0.75rem; margin-bottom: 2rem;
+            background: #fff; padding: 1rem;
+            border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .search-input {
+            flex: 1; border: 1px solid #e5e7eb; border-radius: 8px;
+            padding: 0.7rem 1rem; font-size: 0.9rem; font-family: inherit;
+            outline: none; transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: #e2b96f; }
+        .btn-search {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #e2b96f; border: none; border-radius: 8px;
+            padding: 0.7rem 1.5rem; font-size: 0.9rem; font-weight: 600;
+            font-family: inherit; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-search:hover { opacity: 0.9; }
+
+        /* ── Products Grid ── */
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem; }
+
+        .product-card {
+            background: #fff; border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 15px rgba(0,0,0,0.03);
+            overflow: hidden; transition: transform 0.2s, box-shadow 0.2s;
+            display: flex; flex-direction: column;
+            text-decoration: none; color: inherit;
+        }
+        .product-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+
+        .product-image {
+            height: 180px;
+            background: linear-gradient(135deg, #f3f4f6 0%, #e9ecef 100%);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 4.5rem;
+        }
+        .product-body { padding: 1.25rem; flex: 1; display: flex; flex-direction: column; }
+        .product-name { font-weight: 700; font-size: 1.05rem; margin-bottom: 0.5rem; color: #1a1a2e; line-height: 1.4; }
+        .product-desc { font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        .product-price { font-size: 1rem; color: #e2b96f; font-weight: 700; margin-bottom: 0.5rem; }
+        
+        .btn-view {
+            text-align: center; background: #f3f4f6; color: #374151; padding: 0.6rem;
+            border-radius: 8px; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;
+            margin-top: auto;
+        }
+        .product-card:hover .btn-view { background: #1a1a2e; color: #e2b96f; }
+
+        /* ── Empty / Loading ── */
+        .state-box { text-align: center; padding: 4rem; color: #9ca3af; grid-column: 1/-1; }
+        .state-box .icon { font-size: 3.5rem; margin-bottom: 1rem; }
+
+        /* ── Pagination ── */
+        .pagination { display: flex; justify-content: center; gap: 0.5rem; margin-top: 2.5rem; flex-wrap: wrap; }
+        .page-btn {
+            width: 36px; height: 36px; border: 1px solid #e5e7eb; background: #fff;
+            border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-family: inherit;
+            transition: all 0.15s; display: flex; align-items: center; justify-content: center;
+        }
+        .page-btn:hover { background: #1a1a2e; color: #e2b96f; border-color: #1a1a2e; }
+        .page-btn.active { background: #1a1a2e; color: #e2b96f; border-color: #1a1a2e; font-weight: 700; }
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed; bottom: 2rem; right: 2rem;
+            background: #1a1a2e; color: #fff;
+            padding: 0.85rem 1.25rem; border-radius: 10px;
+            font-size: 0.875rem; font-weight: 500;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+            opacity: 0; transform: translateY(10px); transition: all 0.3s; z-index: 999;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+<!-- ── Navbar ── -->
+<nav class="navbar">
+    <a class="navbar-brand" th:href="@{/}"><span>🐾 Pet</span>Store</a>
+    <div class="navbar-nav">
+        <a class="nav-link active" th:href="@{/products}">Sản phẩm</a>
+        <a class="nav-link cart-link" th:href="@{/cart}">
+            🛒 Giỏ hàng
+            <span class="cart-badge" id="cart-count" style="display:none">0</span>
+        </a>
+        <span style="color:rgba(255,255,255,0.5); font-size:0.85rem;" sec:authorize="isAuthenticated()">
+            Xin chào, <strong style="color:#e2b96f" sec:authentication="name">User</strong>
+        </span>
+        <form th:action="@{/logout}" method="post" style="margin:0;" sec:authorize="isAuthenticated()">
+            <button type="submit" class="btn-logout">Đăng xuất</button>
+        </form>
+        <a th:href="@{/login}" class="nav-link" sec:authorize="!isAuthenticated()">Đăng nhập</a>
+    </div>
+</nav>
+
+<!-- ── Page ── -->
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">🐾 Sản phẩm</h1>
+        <p class="page-subtitle">Khám phá các sản phẩm tuyệt vời cho thú cưng của bạn</p>
+    </div>
+
+    <!-- Sidebar Categories -->
+    <aside class="sidebar">
+        <h3 class="sidebar-title">Danh mục</h3>
+        <ul class="category-list" id="category-list">
+            <li class="category-item active" onclick="selectCategory(null)">Tất cả sản phẩm</li>
+            <!-- Rendered by JS -->
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Search -->
+        <div class="search-bar">
+            <input type="text" id="search-input" class="search-input"
+                   placeholder="Tìm kiếm theo tên sản phẩm..." onkeydown="if(event.key==='Enter') doSearch()">
+            <button class="btn-search" onclick="doSearch()">🔍 Tìm kiếm</button>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="products-grid" id="products-grid">
+            <div class="state-box">
+                <div class="icon">⏳</div>
+                <p>Đang tải sản phẩm...</p>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination"></div>
+    </main>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+    const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+    const icons = ['🐶','🐱','🐠','🐹','🦜','🐰','🦴','🐾','🐕','🐈','🦎','🐇'];
+    const isAuthenticated = /*[[${#authorization.expression('isAuthenticated()')}]]*/ false;
+
+    let currentPage = 0;
+    let currentKeyword = '';
+    let currentCategoryId = null;
+
+    async function loadCategories() {
+        try {
+            const res = await fetch('/api/v1/categories');
+            const data = await res.json();
+            if (data.success) {
+                const list = document.getElementById('category-list');
+                const html = `<li class="category-item ${currentCategoryId === null ? 'active' : ''}" onclick="selectCategory(null)">Tất cả sản phẩm</li>` +
+                    data.data.map(c => `
+                        <li class="category-item ${currentCategoryId === c.id ? 'active' : ''}" 
+                            onclick="selectCategory(${c.id})">${c.name}</li>
+                    `).join('');
+                list.innerHTML = html;
+            }
+        } catch (e) {
+            console.error('Lỗi tải danh mục', e);
+        }
+    }
+
+    function selectCategory(id) {
+        currentCategoryId = id;
+        currentKeyword = ''; // Reset search khi chọn category
+        document.getElementById('search-input').value = '';
+        currentPage = 0;
+        loadCategories(); // Re-render để active màu
+        loadProducts();
+    }
+
+    async function loadProducts() {
+        const grid = document.getElementById('products-grid');
+        grid.innerHTML = '<div class="state-box"><div class="icon">⏳</div><p>Đang tải...</p></div>';
+
+        try {
+            let url = `/api/v1/products?page=${currentPage}&size=8&sort=id,asc`;
+            if (currentKeyword) {
+                url += `&keyword=${encodeURIComponent(currentKeyword)}`;
+            } else if (currentCategoryId) {
+                url += `&categoryId=${currentCategoryId}`;
+            }
+            
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.success) renderProducts(data.data, currentPage);
+            else grid.innerHTML = '<div class="state-box"><div class="icon">❌</div><p>Không tìm thấy sản phẩm nào</p></div>';
+        } catch (e) {
+            grid.innerHTML = '<div class="state-box"><div class="icon">❌</div><p>Không thể tải sản phẩm. Vui lòng thử lại!</p></div>';
+            console.error(e);
+        }
+    }
+
+    function renderProducts(page, currentPageNum) {
+        const grid = document.getElementById('products-grid');
+        const products = page.content || [];
+
+        if (products.length === 0) {
+            grid.innerHTML = '<div class="state-box"><div class="icon">🔍</div><p>Không tìm thấy sản phẩm nào</p></div>';
+            document.getElementById('pagination').innerHTML = '';
+            return;
+        }
+
+        grid.innerHTML = products.map((p, idx) => {
+            // Find lowest price to display
+            let lowestPrice = 0;
+            if (p.variants && p.variants.length > 0) {
+                lowestPrice = Math.min(...p.variants.map(v => v.price));
+            }
+            
+            const priceHtml = lowestPrice > 0 ? `Từ ${fmt(lowestPrice)}` : 'Chưa có giá';
+
+            return `
+                <a href="/products/${p.id}" class="product-card">
+                    <div class="product-image">${icons[(idx + currentPageNum * 8) % icons.length]}</div>
+                    <div class="product-body">
+                        <div class="product-name">${p.name || 'Sản phẩm'}</div>
+                        <div class="product-desc">${p.description || ''}</div>
+                        <div class="product-price">${priceHtml}</div>
+                        <div class="btn-view">Xem chi tiết &rarr;</div>
+                    </div>
+                </a>`;
+        }).join('');
+
+        renderPagination(page, currentPageNum);
+        updateCartCount();
+    }
+
+    function renderPagination(page, current) {
+        const el = document.getElementById('pagination');
+        const total = page.totalPages || 1;
+        if (total <= 1) { el.innerHTML = ''; return; }
+        let html = `<button class="page-btn" onclick="changePage(${current - 1})" ${current === 0 ? 'disabled' : ''}>‹</button>`;
+        for (let i = 0; i < total; i++) {
+            html += `<button class="page-btn ${i === current ? 'active' : ''}" onclick="changePage(${i})">${i + 1}</button>`;
+        }
+        html += `<button class="page-btn" onclick="changePage(${current + 1})" ${current >= total - 1 ? 'disabled' : ''}>›</button>`;
+        el.innerHTML = html;
+    }
+
+    function changePage(p) {
+        currentPage = p;
+        loadProducts();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function doSearch() {
+        currentKeyword = document.getElementById('search-input').value.trim();
+        currentCategoryId = null; // Reset category khi search
+        currentPage = 0;
+        loadCategories(); // Remove active category
+        loadProducts();
+    }
+
+    async function updateCartCount() {
+        if (!isAuthenticated) return;
+        try {
+            const res = await fetch('/api/v1/cart');
+            const data = await res.json();
+            if (data.success) {
+                const count = (data.data.items || []).length;
+                const badge = document.getElementById('cart-count');
+                badge.textContent = count;
+                badge.style.display = count > 0 ? 'flex' : 'none';
+            }
+        } catch (e) {}
+    }
+
+    loadCategories();
+    loadProducts();
+</script>
+</body>
+</html>

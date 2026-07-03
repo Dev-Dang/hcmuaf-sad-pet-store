@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giỏ hàng - Pet Store</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8f9fb;
+            color: #1a1a2e;
+            min-height: 100vh;
+        }
+
+        /* ── Navbar ── */
+        .navbar {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 0 2rem;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .navbar-brand {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #e2b96f;
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+        .navbar-brand span { color: #fff; }
+        .navbar-nav { display: flex; align-items: center; gap: 1rem; }
+        .nav-link {
+            color: rgba(255,255,255,0.75);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .nav-link:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .nav-link.active { color: #e2b96f; }
+        .btn-logout {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .btn-logout:hover { background: rgba(255,255,255,0.2); }
+
+        /* ── Page ── */
+        .page-container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 0.25rem;
+        }
+        .page-subtitle { color: #6b7280; font-size: 0.9rem; margin-bottom: 2rem; }
+
+        /* ── Layout ── */
+        .cart-layout { display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; align-items: start; }
+        @media (max-width: 768px) { .cart-layout { grid-template-columns: 1fr; } }
+
+        /* ── Cart Items ── */
+        .cart-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 20px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        .cart-card-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #f0f0f5;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #374151;
+        }
+        .cart-card-header .icon { font-size: 1.1rem; }
+
+        .cart-empty {
+            padding: 4rem 2rem;
+            text-align: center;
+            color: #9ca3af;
+        }
+        .cart-empty .empty-icon { font-size: 4rem; margin-bottom: 1rem; }
+        .cart-empty p { margin-bottom: 1.5rem; }
+        .btn-shop {
+            display: inline-block;
+            background: linear-gradient(135deg, #e2b96f, #d4a017);
+            color: #fff;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-shop:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(210,160,23,0.4); }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #f9f9fb;
+            transition: background 0.15s;
+        }
+        .cart-item:last-child { border-bottom: none; }
+        .cart-item:hover { background: #fafafa; }
+
+        .item-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #f3f4f6, #e9ecef);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            flex-shrink: 0;
+        }
+        .item-info { flex: 1; min-width: 0; }
+        .item-product { font-weight: 600; font-size: 0.9rem; color: #1a1a2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-variant { font-size: 0.8rem; color: #6b7280; margin-top: 2px; }
+        .item-price { font-size: 0.85rem; color: #e2b96f; font-weight: 600; margin-top: 4px; }
+
+        .item-qty {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 0.3rem 0.5rem;
+        }
+        .qty-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #374151;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .qty-btn:hover { background: #1a1a2e; color: #fff; }
+        .qty-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .qty-value { min-width: 28px; text-align: center; font-weight: 600; font-size: 0.9rem; }
+
+        .item-total { font-weight: 700; font-size: 0.95rem; color: #1a1a2e; min-width: 80px; text-align: right; }
+
+        .btn-remove {
+            background: none;
+            border: none;
+            color: #d1d5db;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0.3rem;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+        .btn-remove:hover { color: #ef4444; background: #fef2f2; }
+
+        /* ── Summary ── */
+        .summary-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 20px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+            position: sticky;
+            top: 80px;
+        }
+        .summary-title { font-weight: 700; font-size: 1rem; color: #1a1a2e; margin-bottom: 1.25rem; }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        .summary-divider { border: none; border-top: 1px solid #f0f0f5; margin: 1rem 0; }
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1a1a2e;
+            margin-bottom: 1.5rem;
+        }
+        .summary-total .price { color: #e2b96f; }
+
+        .btn-checkout {
+            width: 100%;
+            padding: 0.9rem;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #e2b96f;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(26,26,46,0.3);
+        }
+        .btn-checkout:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(26,26,46,0.4); }
+        .btn-checkout:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .continue-link {
+            display: block;
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: #6b7280;
+            text-decoration: none;
+        }
+        .continue-link:hover { color: #1a1a2e; }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #1a1a2e;
+            color: #fff;
+            padding: 0.85rem 1.25rem;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.error { background: #dc2626; }
+        .toast.success { background: #16a34a; }
+
+        /* ── Loading Overlay ── */
+        .loading { opacity: 0.5; pointer-events: none; transition: opacity 0.2s; }
+    </style>
+</head>
+<body>
+
+<!-- ── Navbar ── -->
+<nav class="navbar">
+    <a class="navbar-brand" th:href="@{/}"><span>🐾 Pet</span>Store</a>
+    <div class="navbar-nav">
+        <a class="nav-link" th:href="@{/products}">Sản phẩm</a>
+        <a class="nav-link active" th:href="@{/cart}">🛒 Giỏ hàng</a>
+        <span style="color:rgba(255,255,255,0.5); font-size:0.85rem;">
+            Xin chào, <strong style="color:#e2b96f" sec:authentication="name">User</strong>
+        </span>
+        <form th:action="@{/logout}" method="post" style="margin:0;">
+            <button type="submit" class="btn-logout">Đăng xuất</button>
+        </form>
+    </div>
+</nav>
+
+<!-- ── Page ── -->
+<div class="page-container">
+    <h1 class="page-title">🛒 Giỏ hàng của bạn</h1>
+    <p class="page-subtitle" id="item-count-text">Đang tải...</p>
+
+    <div class="cart-layout">
+        <!-- Items Panel -->
+        <div class="cart-card" id="cart-panel">
+            <div class="cart-card-header">
+                <span class="icon">📦</span> Sản phẩm đã chọn
+            </div>
+            <div id="cart-body">
+                <!-- Rendered by JS -->
+                <div class="cart-empty">
+                    <div class="empty-icon">🛒</div>
+                    <p>Giỏ hàng của bạn đang trống</p>
+                    <a th:href="@{/products}" class="btn-shop">Khám phá sản phẩm →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Panel -->
+        <div class="summary-card" id="summary-card">
+            <div class="summary-title">Tóm tắt đơn hàng</div>
+            <div class="summary-row">
+                <span>Tạm tính</span>
+                <span id="subtotal">0 ₫</span>
+            </div>
+            <div class="summary-row">
+                <span>Phí giao hàng</span>
+                <span style="color:#16a34a; font-weight:600;">Miễn phí (thử nghiệm)</span>
+            </div>
+            <hr class="summary-divider">
+            <div class="summary-total">
+                <span>Tổng cộng</span>
+                <span class="price" id="total">0 ₫</span>
+            </div>
+            <button class="btn-checkout" id="btn-checkout" disabled>
+                Tiến hành thanh toán →
+            </button>
+            <a th:href="@{/products}" class="continue-link">← Tiếp tục mua sắm</a>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+    const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+
+    async function fetchCart() {
+        const res = await fetch('/api/v1/cart');
+        const data = await res.json();
+        if (data.success) renderCart(data.data);
+    }
+
+    function renderCart(cart) {
+        const items = cart.items || [];
+        const subtotal = cart.totalCartPrice || 0;
+        const body = document.getElementById('cart-body');
+        const countEl = document.getElementById('item-count-text');
+        const checkoutBtn = document.getElementById('btn-checkout');
+
+        document.getElementById('subtotal').textContent = fmt(subtotal);
+        document.getElementById('total').textContent = fmt(subtotal);
+
+        if (items.length === 0) {
+            countEl.textContent = 'Giỏ hàng trống';
+            checkoutBtn.disabled = true;
+            body.innerHTML = `
+                <div class="cart-empty">
+                    <div class="empty-icon">🛒</div>
+                    <p>Giỏ hàng của bạn đang trống</p>
+                    <a href="/products" class="btn-shop">Khám phá sản phẩm →</a>
+                </div>`;
+            return;
+        }
+
+        countEl.textContent = `${items.length} sản phẩm trong giỏ`;
+        checkoutBtn.disabled = false;
+
+        const icons = ['🐶','🐱','🐠','🐹','🦜','🐰','🦴','🐾'];
+        body.innerHTML = items.map((item, i) => `
+            <div class="cart-item" id="item-${item.id}">
+                <div class="item-icon">${icons[i % icons.length]}</div>
+                <div class="item-info">
+                    <div class="item-product">${item.productName || ''}</div>
+                    <div class="item-variant">${item.variantName || ''}</div>
+                    <div class="item-price">${fmt(item.unitPrice)} / sản phẩm</div>
+                </div>
+                <div class="item-qty">
+                    <button class="qty-btn" onclick="updateQty(${item.id}, ${item.quantity - 1})" ${item.quantity <= 1 ? 'disabled' : ''}>−</button>
+                    <span class="qty-value">${item.quantity}</span>
+                    <button class="qty-btn" onclick="updateQty(${item.id}, ${item.quantity + 1})">+</button>
+                </div>
+                <div class="item-total">${fmt(item.totalPrice)}</div>
+                <button class="btn-remove" onclick="removeItem(${item.id})" title="Xóa">🗑</button>
+            </div>`
+        ).join('');
+    }
+
+    async function updateQty(cartItemId, newQty) {
+        if (newQty < 1) return;
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/v1/cart/items/${cartItemId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quantity: newQty })
+            });
+            const data = await res.json();
+            if (data.success) {
+                renderCart(data.data);
+                showToast('✅ Đã cập nhật số lượng', 'success');
+            } else {
+                showToast('❌ ' + (data.message || 'Lỗi cập nhật'), 'error');
+            }
+        } catch (e) {
+            showToast('❌ Lỗi kết nối', 'error');
+        }
+        setLoading(false);
+    }
+
+    async function removeItem(cartItemId) {
+        if (!confirm('Xóa sản phẩm này khỏi giỏ hàng?')) return;
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/v1/cart/items/${cartItemId}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+                renderCart(data.data);
+                showToast('🗑 Đã xóa sản phẩm', 'success');
+            } else {
+                showToast('❌ ' + (data.message || 'Lỗi xóa'), 'error');
+            }
+        } catch (e) {
+            showToast('❌ Lỗi kết nối', 'error');
+        }
+        setLoading(false);
+    }
+
+    function setLoading(loading) {
+        document.getElementById('cart-panel').classList.toggle('loading', loading);
+    }
+
+    function showToast(msg, type = '') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast show ' + type;
+        setTimeout(() => t.className = 'toast', 3000);
+    }
+
+    document.getElementById('btn-checkout').addEventListener('click', () => {
+        showToast('🚧 Chức năng thanh toán đang được phát triển...', '');
+    });
+
+    fetchCart();
+</script>
+</body>
+</html>

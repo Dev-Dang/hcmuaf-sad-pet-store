@@ -5,7 +5,26 @@
     <title>Pet Store - Hello</title>
 </head>
 <body>
-    <!-- Thymeleaf sẽ lấy dữ liệu từ biến message ở Controller -->
-    <h1>HCMUAF - System Analysis and Design (SAD) Project</h1>
+    <div style="padding: 1rem; background: #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h2>HCMUAF - SAD Pet Store</h2>
+        </div>
+        <div sec:authorize="!isAuthenticated()">
+            <a th:href="@{/login}" style="margin-right: 1rem;">Đăng nhập</a>
+            <a th:href="@{/register}">Đăng ký</a>
+        </div>
+        <div sec:authorize="isAuthenticated()" style="display: flex; align-items: center;">
+            <span style="margin-right: 1rem;">Xin chào, <span sec:authentication="name">User</span>!</span>
+            <form th:action="@{/logout}" method="post" style="margin: 0;">
+                <button type="submit" style="padding: 0.5rem 1rem; cursor: pointer;">Đăng xuất</button>
+            </form>
+        </div>
+    </div>
+    
+    <div style="padding: 2rem;">
+        <h1>Chào mừng đến với Pet Store!</h1>
+        <p>Đây là trang chủ dành cho cả khách và thành viên (đã đăng nhập).</p>
+        <p>Các chức năng chính (Giỏ hàng, Sản phẩm, Đơn hàng) sẽ được xây dựng sau.</p>
+    </div>
 </body>
 </html>

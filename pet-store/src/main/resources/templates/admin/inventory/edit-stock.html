@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <title>Điều chỉnh</title>
+
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+
+</head>
+
+<body>
+
+<header th:replace="~{fragments/navigation :: adminHeader('inventory')}"></header>
+
+<main class="page stack">
+
+    <div class="actions">
+
+        <h1>Điều chỉnh tồn kho</h1>
+
+        <a class="button secondary"
+           th:href="@{/admin/inventory/adjust}">
+            Quay lại
+        </a>
+
+    </div>
+
+    <section class="panel stack">
+
+        <form method="post"
+              th:action="@{/admin/inventory/adjust/{id}(id=${product.id})}">
+
+            <label>Tên sản phẩm</label>
+
+            <input
+                    readonly
+                    th:value="${product.name}">
+
+            <label>Số lượng</label>
+
+            <input
+
+                    type="number"
+
+                    name="quantity"
+
+                    min="0"
+
+                    th:value="${product.quantity}">
+
+            <button class="button">
+
+                Lưu
+
+            </button>
+
+        </form>
+
+    </section>
+
+</main>
+
+</body>
+
+</html>

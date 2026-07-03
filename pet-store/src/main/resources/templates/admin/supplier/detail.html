@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${supplier.name}">Chi tiết nhà cung cấp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/navigation :: adminHeader('suppliers')}"></header>
+
+<main class="page stack">
+    <div class="actions">
+        <h1 th:text="${supplier.name}">Công ty TNHH ABC</h1>
+        <a class="button secondary" th:href="@{/admin/suppliers}">Quay lại</a>
+        <a class="button" th:href="@{/admin/suppliers/{id}/edit(id=${supplier.id})}">Sửa</a>
+    </div>
+
+    <section class="panel detail-grid">
+        <div>
+            <span class="muted">Mã nhà cung cấp</span>
+            <strong th:text="${supplier.supplierCode}">NCC-0000001</strong>
+        </div>
+        <div>
+            <span class="muted">Trạng thái</span>
+            <strong th:if="${supplier.active}">Đang hoạt động</strong>
+            <strong th:unless="${supplier.active}" class="danger-text">Ngừng hoạt động</strong>
+        </div>
+        <div>
+            <span class="muted">Người liên hệ</span>
+            <strong th:text="${supplier.contactPerson ?: 'Chưa có'}">Nguyễn Văn A</strong>
+        </div>
+        <div>
+            <span class="muted">Số điện thoại</span>
+            <strong th:text="${supplier.phone ?: 'Chưa có'}">0900000000</strong>
+        </div>
+        <div>
+            <span class="muted">Email</span>
+            <strong th:text="${supplier.email ?: 'Chưa có'}">contact@abc.com</strong>
+        </div>
+        <div>
+            <span class="muted">Ngày tạo</span>
+            <strong th:text="${#temporals.format(supplier.createdAt, 'dd/MM/yyyy HH:mm')}">01/05/2026 09:00</strong>
+        </div>
+        <div class="detail-wide">
+            <span class="muted">Địa chỉ</span>
+            <strong th:text="${supplier.address ?: 'Chưa có'}">123 Đường ABC, Quận 1, TP.HCM</strong>
+        </div>
+    </section>
+
+    <section class="panel stack">
+        <h2>Sản phẩm của nhà cung cấp (<span th:text="${#lists.size(products)}">0</span>)</h2>
+
+        <p th:if="${#lists.isEmpty(products)}">Nhà cung cấp này chưa có sản phẩm nào.</p>
+
+        <table class="data-table" th:unless="${#lists.isEmpty(products)}">
+            <thead>
+            <tr>
+                <th>Tên sản phẩm</th>
+                <th>Trạng thái</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="product : ${products}">
+                <td th:text="${product.name}">Royal Canin Chó Trưởng Thành</td>
+                <td th:text="${product.status}">ACTIVE</td>
+                <td><a th:href="@{/products/{id}(id=${product.id})}">Xem</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Nhập kho</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/navigation :: adminHeader('inventory')}"></header>
+
+<main class="page stack">
+    <div class="actions">
+        <h1>Nhập kho</h1>
+        <a class="button secondary" th:href="@{/admin/inventory}">Quay lại</a>
+
+    </div>
+
+    <p th:if="${param.success}" style="color: green;">
+        Nhập kho thành công.
+    </p>
+
+    <section class="panel stack">
+        <form th:action="@{/admin/inventory/import}" method="post" class="stack">
+
+            <label>Tên sản phẩm</label>
+            <input type="text" name="name" required>
+
+            <label>Mô tả</label>
+            <textarea name="description"></textarea>
+            <label>Giá tiền</label>
+            <input type="number" name="price" min="0" step="1000" value="0" required>
+            <label>Số lượng nhập</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <button type="button" class="button secondary" onclick="changeQty(-1)">-</button>
+                <input id="quantity" type="number" name="quantity" min="1" value="1" required style="width:90px;">
+                <button type="button" class="button secondary" onclick="changeQty(1)">+</button>
+            </div>
+
+            <button class="button" type="submit">Lưu nhập kho</button>
+        </form>
+    </section>
+</main>
+
+<script>
+    function changeQty(delta) {
+        const input = document.getElementById("quantity");
+        let value = parseInt(input.value || "1");
+        value += delta;
+
+        if (value < 1) {
+            value = 1;
+        }
+
+        input.value = value;
+    }
+</script>
+
+</body>
+</html>

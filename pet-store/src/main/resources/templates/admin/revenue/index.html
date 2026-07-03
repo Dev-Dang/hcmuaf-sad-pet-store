@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thống kê doanh thu</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/navigation :: adminHeader('revenue')}"></header>
+
+<main class="page stack">
+    <div class="actions">
+        <h1>Thống kê doanh thu</h1>
+        <a class="button secondary" th:href="@{/admin}">Quay lại</a>
+    </div>
+
+    <section class="panel detail-grid">
+        <div>
+            <span class="muted">Tổng số hóa đơn</span>
+            <strong th:text="${summary.totalOrders}">0</strong>
+        </div>
+        <div>
+            <span class="muted">Tổng doanh thu</span>
+            <strong th:text="${#numbers.formatDecimal(summary.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</strong>
+        </div>
+        <div>
+            <span class="muted">Tiền hàng</span>
+            <strong th:text="${#numbers.formatDecimal(summary.subtotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</strong>
+        </div>
+        <div>
+            <span class="muted">Phí giao hàng</span>
+            <strong th:text="${#numbers.formatDecimal(summary.shippingFee, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</strong>
+        </div>
+    </section>
+
+    <section class="panel stack">
+        <h2>Doanh thu theo ngày</h2>
+
+        <table>
+            <thead>
+            <tr>
+                <th>Ngày</th>
+                <th>Số hóa đơn</th>
+                <th>Doanh thu</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${dailyRevenue}">
+                <td th:text="${r.label}">01/07/2026</td>
+                <td th:text="${r.totalOrders}">0</td>
+                <td th:text="${#numbers.formatDecimal(r.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="panel stack">
+        <h2>Doanh thu theo tháng</h2>
+
+        <table>
+            <thead>
+            <tr>
+                <th>Tháng</th>
+                <th>Số hóa đơn</th>
+                <th>Doanh thu</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${monthlyRevenue}">
+                <td th:text="${r.label}">07/2026</td>
+                <td th:text="${r.totalOrders}">0</td>
+                <td th:text="${#numbers.formatDecimal(r.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="panel stack">
+        <h2>Doanh thu theo năm</h2>
+
+        <table>
+            <thead>
+            <tr>
+                <th>Năm</th>
+                <th>Số hóa đơn</th>
+                <th>Doanh thu</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${yearlyRevenue}">
+                <td th:text="${r.label}">2026</td>
+                <td th:text="${r.totalOrders}">0</td>
+                <td th:text="${#numbers.formatDecimal(r.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

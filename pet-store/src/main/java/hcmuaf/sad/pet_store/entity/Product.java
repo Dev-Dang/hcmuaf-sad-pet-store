@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -20,7 +21,14 @@ public class Product extends BaseEntity {
     private Category category;
 
     private String name;
+
     private String description;
+
+    @Column(nullable = false)
+    private Integer quantity = 1;
+
+    @Column(nullable = false, precision = 18, scale = 2)
+    private BigDecimal price = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     private Status status = Status.DRAFT;
@@ -30,6 +38,8 @@ public class Product extends BaseEntity {
     private List<ProductVariant> variants;
 
     public enum Status {
-        DRAFT, ACTIVE, INACTIVE
+        DRAFT,
+        ACTIVE,
+        INACTIVE
     }
 }

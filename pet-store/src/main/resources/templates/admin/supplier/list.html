@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý nhà cung cấp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/navigation :: adminHeader('suppliers')}"></header>
+
+<main class="page stack">
+    <div class="actions">
+        <h1>Quản lý nhà cung cấp</h1>
+        <a class="button" th:href="@{/admin/suppliers/new}">+ Thêm nhà cung cấp</a>
+    </div>
+
+    <form class="panel search-form" th:action="@{/admin/suppliers}" method="get">
+        <label for="keyword">Tên, mã NCC, người liên hệ hoặc SĐT</label>
+        <input id="keyword" name="keyword" type="search" th:value="${keyword}" placeholder="Nhập từ khóa">
+        <button type="submit">Tìm kiếm</button>
+        <a class="button secondary" th:href="@{/admin/suppliers}">Xóa lọc</a>
+    </form>
+
+    <section class="panel alert" th:if="${error}">
+        <p th:text="${error}">Lỗi</p>
+    </section>
+
+    <section class="panel" th:if="${emptyResult}">
+        <p>Không tìm thấy nhà cung cấp nào khớp với từ khóa.</p>
+    </section>
+
+    <section class="panel" th:unless="${#lists.isEmpty(suppliers)}">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Mã NCC</th>
+                <th>Tên nhà cung cấp</th>
+                <th>Người liên hệ</th>
+                <th>Điện thoại</th>
+                <th>Email</th>
+                <th>Trạng thái</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="supplier : ${suppliers}">
+                <td th:text="${supplier.supplierCode}">NCC-0000001</td>
+                <td th:text="${supplier.name}">Công ty TNHH ABC</td>
+                <td th:text="${supplier.contactPerson ?: '—'}">Nguyễn Văn A</td>
+                <td th:text="${supplier.phone ?: '—'}">0900000000</td>
+                <td th:text="${supplier.email ?: '—'}">contact@abc.com</td>
+                <td>
+                    <span th:if="${supplier.active}">Đang hoạt động</span>
+                    <span th:unless="${supplier.active}" class="danger-text">Ngừng hoạt động</span>
+                </td>
+                <td class="inline-form">
+                    <a th:href="@{/admin/suppliers/{id}(id=${supplier.id})}">Chi tiết</a>
+                    <a th:href="@{/admin/suppliers/{id}/edit(id=${supplier.id})}">Sửa</a>
+                    <form th:action="@{/admin/suppliers/{id}/delete(id=${supplier.id})}" method="post"
+                          onsubmit="return confirm('Xóa nhà cung cấp này?');">
+                        <button class="secondary" type="submit">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <nav class="pagination" th:if="${totalPages > 1}">
+        <a class="button secondary"
+           th:if="${page > 1}"
+           th:href="@{/admin/suppliers(page=${page - 1}, keyword=${keyword})}">Trước</a>
+        <span th:text="|Trang ${page}/${totalPages}|">Trang 1/1</span>
+        <a class="button secondary"
+           th:if="${page < totalPages}"
+           th:href="@{/admin/suppliers(page=${page + 1}, keyword=${keyword})}">Sau</a>
+    </nav>
+</main>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Cảnh báo tồn kho</title>
+
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+
+</head>
+
+<body>
+
+<header th:replace="~{fragments/navigation :: adminHeader('inventory')}"></header>
+
+<main class="page stack">
+
+    <div class="actions">
+
+        <h1>Cảnh báo tồn kho</h1>
+
+        <a class="button secondary"
+           th:href="@{/admin/inventory}">
+            Quay lại
+        </a>
+
+    </div>
+
+    <section class="panel">
+
+        <table>
+
+            <thead>
+
+            <tr>
+
+                <th>Tên sản phẩm</th>
+
+                <th>Số lượng hiện tại</th>
+
+                <th>Ngưỡng</th>
+
+                <th>Trạng thái</th>
+
+            </tr>
+
+            </thead>
+
+            <tbody>
+
+            <tr th:each="p:${products}">
+
+                <td th:text="${p.name}"></td>
+
+                <td th:text="${p.quantity}"></td>
+
+                <td th:text="${p.stockThreshold}"></td>
+
+                <td>
+
+                    <span style="color:red;font-weight:bold;">
+                        ⚠ Sắp hết hàng
+                    </span>
+
+                </td>
+
+            </tr>
+
+            </tbody>
+
+        </table>
+
+        <div th:if="${#lists.isEmpty(products)}">
+
+            <p style="color:green;font-weight:bold">
+
+                ✓ Không có sản phẩm nào dưới ngưỡng tồn kho
+
+            </p>
+
+        </div>
+
+    </section>
+
+</main>
+
+</body>
+
+</html>

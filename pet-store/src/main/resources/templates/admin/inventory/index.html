@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý tồn kho</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/navigation :: adminHeader('inventory')}"></header>
+
+<main class="page stack">
+    <div class="actions">
+        <h1>Quản lý tồn kho</h1>
+        <a class="button secondary" th:href="@{/admin/}">Quay lại</a>
+    </div>
+
+    <section class="panel stack">
+        <a class="button secondary" th:href="@{/admin/inventory/import}">
+            Nhập kho
+        </a>
+
+        <a class="button secondary" th:href="@{/admin/inventory/adjust}">
+            Điều chỉnh tồn kho
+        </a>
+
+        <a class="button secondary" th:href="@{/admin/inventory/alerts}">
+            Xem cảnh báo tồn kho
+        </a>
+
+        <a class="button secondary" th:href="@{/admin/inventory/thresholds}">
+            Cài ngưỡng tồn kho
+        </a>
+    </section>
+</main>
+</body>
+</html>

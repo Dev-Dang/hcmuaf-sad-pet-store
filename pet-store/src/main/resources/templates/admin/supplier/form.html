@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${editMode} ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp'">Nhà cung cấp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/navigation :: adminHeader('suppliers')}"></header>
+
+<main class="page">
+    <h1 th:text="${editMode} ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp'">Nhà cung cấp</h1>
+
+    <form class="form-panel" th:action="${editMode} ? @{/admin/suppliers/{id}(id=${supplierId})} : @{/admin/suppliers}"
+          th:object="${supplierRequest}"
+          method="post">
+
+        <div class="form-field">
+            <label for="name">Tên nhà cung cấp</label><br>
+            <input id="name" type="text" th:field="*{name}">
+            <br><span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+        </div>
+
+        <div class="form-field">
+            <label for="contactPerson">Người liên hệ</label><br>
+            <input id="contactPerson" type="text" th:field="*{contactPerson}">
+            <br><span class="field-error" th:if="${#fields.hasErrors('contactPerson')}" th:errors="*{contactPerson}"></span>
+        </div>
+
+        <div class="form-field">
+            <label for="phone">Số điện thoại</label><br>
+            <input id="phone" type="tel" th:field="*{phone}">
+            <br><span class="field-error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></span>
+        </div>
+
+        <div class="form-field">
+            <label for="email">Email</label><br>
+            <input id="email" type="email" th:field="*{email}">
+            <br><span class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+        </div>
+
+        <div class="form-field">
+            <label for="address">Địa chỉ</label><br>
+            <textarea id="address" th:field="*{address}"></textarea>
+            <br><span class="field-error" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></span>
+        </div>
+
+        <div class="form-field">
+            <label for="active">
+                <input id="active" type="checkbox" th:field="*{active}" style="width:auto;">
+                Đang hoạt động
+            </label>
+        </div>
+
+        <div class="actions">
+            <button type="submit">Lưu nhà cung cấp</button>
+            <a class="button secondary" th:href="@{/admin/suppliers}">Hủy</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

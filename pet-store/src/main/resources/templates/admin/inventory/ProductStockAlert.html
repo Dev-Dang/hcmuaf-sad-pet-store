@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cảnh báo tồn kho</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/navigation :: adminHeader('inventory')}"></header>
+
+<main class="page stack">
+    <div class="actions">
+        <h1>Cảnh báo tồn kho</h1>
+        <a class="button secondary" th:href="@{/admin/inventory/import}">Nhập kho</a>
+        <a class="button secondary" th:href="@{/admin}">Quay lại</a>
+    </div>
+
+    <section class="panel stack">
+        <table>
+            <thead>
+            <tr>
+                <th>Mã SP</th>
+                <th>Tên sản phẩm</th>
+                <th>Số lượng hiện tại</th>
+                <th>Ngưỡng cảnh báo</th>
+                <th>Điều chỉnh ngưỡng</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="p : ${products}">
+                <td th:text="${p.code}">SP001</td>
+                <td th:text="${p.name}">Thức ăn mèo</td>
+                <td th:text="${p.quantity}">2</td>
+                <td th:text="${p.stockThreshold}">5</td>
+                <td>
+                    <form th:action="@{/admin/inventory/threshold}" method="post" style="display:flex; gap:8px;">
+                        <input type="hidden" name="productId" th:value="${p.id}">
+                        <input type="number" name="threshold" min="0" th:value="${p.stockThreshold}" style="width:90px;">
+                        <button class="button" type="submit">Lưu</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <p th:if="${#lists.isEmpty(products)}" class="muted">
+            Không có sản phẩm nào dưới ngưỡng tồn kho.
+        </p>
+    </section>
+</main>
+</body>
+</html>

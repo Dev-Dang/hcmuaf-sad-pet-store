@@ -8,9 +8,9 @@
 <body>
 <header class="topbar">
     <div class="topbar-inner">
-        <a class="brand" th:href="@{/}">Pet Store</a>
+        <a class="brand" th:href="@{/static}">Pet Store</a>
         <nav class="nav">
-            <a th:href="@{/}">Trang chủ</a>
+            <a th:href="@{/static}">Trang chủ</a>
         </nav>
     </div>
 </header>
@@ -19,7 +19,7 @@
     <section class="panel">
         <h1>Đã xảy ra lỗi</h1>
         <p th:text="${errorMessage}">Có lỗi xảy ra. Vui lòng thử lại.</p>
-        <a class="button secondary" th:href="@{/}">Quay về trang chủ</a>
+        <a class="button secondary" th:href="@{/static}">Quay về trang chủ</a>
     </section>
 </main>
 </body>

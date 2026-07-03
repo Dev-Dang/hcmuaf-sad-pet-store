@@ -1,5 +1,7 @@
 package hcmuaf.sad.pet_store.config;
 
+import hcmuaf.sad.pet_store.model.InventoryModel;
+import hcmuaf.sad.pet_store.model.RevenueModel;
 import hcmuaf.sad.pet_store.util.BusinessKeyGenerator;
 import hcmuaf.sad.pet_store.util.DBUtils;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +21,14 @@ public class AppConfig {
         factory.setReadTimeout(5000);
         return new RestTemplate(factory);
     }
-
+    @Bean
+    public InventoryModel inventoryModel() {
+        return new InventoryModel();
+    }
+    @Bean
+    public RevenueModel revenueModel() {
+        return new RevenueModel();
+    }
     @Bean
     public DBUtils dbUtils(JdbcTemplate jdbcTemplate, PlatformTransactionManager transactionManager) {
         return new DBUtils(jdbcTemplate, transactionManager);

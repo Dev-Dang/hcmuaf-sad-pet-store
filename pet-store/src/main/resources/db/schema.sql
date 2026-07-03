@@ -12,8 +12,8 @@ CREATE DATABASE pet_store CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE pet_store;
 
 CREATE TABLE IF NOT EXISTS users (
-    id                BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_code         VARCHAR(20)                NOT NULL,
+                                     id                BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                     user_code         VARCHAR(20)                NOT NULL,
     email             VARCHAR(255)               NOT NULL,
     display_name      VARCHAR(255)               NOT NULL,
     role              ENUM ('CUSTOMER', 'ADMIN') NOT NULL DEFAULT 'CUSTOMER',
@@ -23,41 +23,61 @@ CREATE TABLE IF NOT EXISTS users (
     is_deleted        BOOLEAN                    NOT NULL DEFAULT FALSE,
     created_at        DATETIME(3)                NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT chk_users_scd_window CHECK (
-        (is_current = TRUE AND effective_to IS NULL)
-        OR (is_current = FALSE AND effective_to IS NOT NULL)
+(is_current = TRUE AND effective_to IS NULL)
+    OR (is_current = FALSE AND effective_to IS NOT NULL)
     ),
     INDEX idx_users_email_current (email, is_current, is_deleted),
     INDEX idx_users_user_code_current (user_code, is_current, is_deleted),
     INDEX idx_users_role_current_created (role, is_current, is_deleted, created_at)
-) ENGINE=InnoDB;
+    ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS categories (
-    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name         VARCHAR(255) NOT NULL,
+                                          id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                          name         VARCHAR(255) NOT NULL,
     description  TEXT         NULL,
     is_active    BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     updated_at   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     deleted_at   DATETIME(3)  NULL
-) ENGINE=InnoDB;
+    ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS suppliers (
+                                         id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                         supplier_code   VARCHAR(20)  NOT NULL,
+    name            VARCHAR(255) NOT NULL,
+    contact_person  VARCHAR(255) NULL,
+    phone           VARCHAR(20)  NULL,
+    email           VARCHAR(255) NULL,
+    address         VARCHAR(500) NULL,
+    is_active       BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    updated_at      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+    deleted_at      DATETIME(3)  NULL,
+    UNIQUE KEY uk_suppliers_supplier_code (supplier_code),
+    INDEX idx_suppliers_name (name),
+    INDEX idx_suppliers_deleted_at (deleted_at)
+    ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS products (
-    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
-    category_id  BIGINT       NOT NULL,
-    name         VARCHAR(255) NOT NULL,
+                                        id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                        category_id  BIGINT       NOT NULL,
+                                        supplier_id  BIGINT       NULL,
+                                        name         VARCHAR(255) NOT NULL,
     description  TEXT         NULL,
     status       ENUM ('DRAFT', 'ACTIVE', 'INACTIVE') NOT NULL DEFAULT 'DRAFT',
     created_at   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     updated_at   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     deleted_at   DATETIME(3)  NULL,
     CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES categories(id),
-    INDEX idx_products_category_id (category_id)
-) ENGINE=InnoDB;
+    CONSTRAINT fk_products_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(id),
+    INDEX idx_products_category_id (category_id),
+    INDEX idx_products_supplier_id (supplier_id)
+    ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS product_variants (
-    id                BIGINT AUTO_INCREMENT PRIMARY KEY,
-    product_id        BIGINT        NOT NULL,
-    name              VARCHAR(255)  NOT NULL,
+                                                id                BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                                product_id        BIGINT        NOT NULL,
+                                                name              VARCHAR(255)  NOT NULL,
     price             DECIMAL(10,2) NOT NULL DEFAULT 0,
     available_stock   INT           NOT NULL DEFAULT 0,
     status            ENUM ('ACTIVE', 'INACTIVE') NOT NULL DEFAULT 'ACTIVE',
@@ -66,11 +86,11 @@ CREATE TABLE IF NOT EXISTS product_variants (
     deleted_at        DATETIME(3)   NULL,
     CONSTRAINT fk_product_variants_product FOREIGN KEY (product_id) REFERENCES products(id),
     INDEX idx_product_variants_product_id (product_id)
-) ENGINE=InnoDB;
+    ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS cart_items (
-    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_code     VARCHAR(20)  NOT NULL,
+                                          id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                          user_code     VARCHAR(20)  NOT NULL,
     variant_id    BIGINT       NOT NULL,
     quantity      INT          NOT NULL DEFAULT 1,
     created_at    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -79,27 +99,27 @@ CREATE TABLE IF NOT EXISTS cart_items (
     CONSTRAINT fk_cart_items_variant FOREIGN KEY (variant_id) REFERENCES product_variants(id),
     INDEX idx_cart_items_user_code (user_code),
     INDEX idx_cart_items_variant_id (variant_id)
-) ENGINE=InnoDB;
+    ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS user_credential (
-    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_code        VARCHAR(20)              NOT NULL,
+                                               id               BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                               user_code        VARCHAR(20)              NOT NULL,
     provider         ENUM ('EMAIL', 'GOOGLE') NOT NULL,
     provider_user_id VARCHAR(255)             NULL,
     secret_hash      VARCHAR(255)             NULL,
     linked_at        DATETIME(3)              NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT chk_user_credential_provider_payload CHECK (
-        (provider = 'EMAIL' AND secret_hash IS NOT NULL AND provider_user_id IS NULL)
-        OR (provider = 'GOOGLE' AND secret_hash IS NULL AND provider_user_id IS NOT NULL)
+(provider = 'EMAIL' AND secret_hash IS NOT NULL AND provider_user_id IS NULL)
+    OR (provider = 'GOOGLE' AND secret_hash IS NULL AND provider_user_id IS NOT NULL)
     ),
     UNIQUE KEY uk_user_provider (user_code, provider),
     UNIQUE KEY uk_provider_user_id (provider, provider_user_id),
     INDEX idx_user_credential_user_code (user_code)
-) ENGINE=InnoDB;
+    ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS shipping_addresses (
-    id                     BIGINT AUTO_INCREMENT PRIMARY KEY,
-    address_id             VARCHAR(36)    NOT NULL,
+                                                  id                     BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                                  address_id             VARCHAR(36)    NOT NULL,
     user_code              VARCHAR(20)    NOT NULL,
     recipient_name         VARCHAR(255)   NOT NULL,
     phone                  VARCHAR(20)    NOT NULL,
@@ -115,16 +135,16 @@ CREATE TABLE IF NOT EXISTS shipping_addresses (
     is_deleted             BOOLEAN        NOT NULL DEFAULT FALSE,
     created_at             DATETIME(3)    NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT chk_shipping_addresses_scd_window CHECK (
-        (is_current = TRUE AND effective_to IS NULL)
-        OR (is_current = FALSE AND effective_to IS NOT NULL)
+(is_current = TRUE AND effective_to IS NULL)
+    OR (is_current = FALSE AND effective_to IS NOT NULL)
     ),
     INDEX idx_addr_user_code_current (user_code, is_current, is_deleted),
     INDEX idx_addr_address_id_current (address_id, is_current, is_deleted)
-) ENGINE=InnoDB;
+    ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS otp_challenges (
-    id                     BIGINT AUTO_INCREMENT PRIMARY KEY,
-    challenge_id           VARCHAR(36)                                           NOT NULL,
+                                              id                     BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                              challenge_id           VARCHAR(36)                                           NOT NULL,
     purpose                ENUM ('RESET_PASSWORD')                               NOT NULL,
     target_type            ENUM ('EMAIL')                                        NOT NULL,
     target_value           VARCHAR(255)                                          NOT NULL,
@@ -139,22 +159,22 @@ CREATE TABLE IF NOT EXISTS otp_challenges (
     created_at             DATETIME(3)                                           NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT chk_otp_challenges_resend_count CHECK (resend_count >= 0),
     CONSTRAINT chk_otp_challenges_verified_state CHECK (
-        (status IN ('PENDING', 'EXPIRED') AND verified_otp_record_id IS NULL AND verified_at IS NULL)
-        OR (status IN ('VERIFIED', 'COMPLETED') AND verified_otp_record_id IS NOT NULL AND verified_at IS NOT NULL)
+    (status IN ('PENDING', 'EXPIRED') AND verified_otp_record_id IS NULL AND verified_at IS NULL)
+    OR (status IN ('VERIFIED', 'COMPLETED') AND verified_otp_record_id IS NOT NULL AND verified_at IS NOT NULL)
     ),
     CONSTRAINT chk_otp_challenges_completed_state CHECK (
-        (status = 'COMPLETED' AND completed_at IS NOT NULL)
-        OR (status <> 'COMPLETED' AND completed_at IS NULL)
+(status = 'COMPLETED' AND completed_at IS NOT NULL)
+    OR (status <> 'COMPLETED' AND completed_at IS NULL)
     ),
     UNIQUE KEY uk_otp_challenges_challenge_id (challenge_id),
     INDEX idx_otp_challenges_user_target (user_code, purpose, target_type, target_value, status),
     INDEX idx_otp_challenges_status_expires (status, expires_at)
-) ENGINE=InnoDB;
+    ) ENGINE=InnoDB;
 
 -- Temporary UC-23 table. Replace with the official Order schema when available.
 CREATE TABLE IF NOT EXISTS orders (
-    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
-    order_code       VARCHAR(20)   NOT NULL UNIQUE,
+                                      id               BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                      order_code       VARCHAR(20)   NOT NULL UNIQUE,
     user_id          BIGINT        NOT NULL,
     recipient_name   VARCHAR(255)  NULL,
     recipient_phone  VARCHAR(20)   NULL,
@@ -171,12 +191,12 @@ CREATE TABLE IF NOT EXISTS orders (
     deleted_at       DATETIME(3)   NULL,
     CONSTRAINT fk_orders_user_id FOREIGN KEY (user_id) REFERENCES users(id),
     INDEX idx_orders_user_id_created_at (user_id, created_at)
-) ENGINE=InnoDB;
+    ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS order_items (
-    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
-    order_id      BIGINT        NOT NULL,
-    product_name  VARCHAR(255)  NOT NULL,
+                                           id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                           order_id      BIGINT        NOT NULL,
+                                           product_name  VARCHAR(255)  NOT NULL,
     variant_name  VARCHAR(255)  NULL,
     unit_price    DECIMAL(12,2) NOT NULL,
     quantity      INT           NOT NULL,
@@ -190,11 +210,11 @@ CREATE TABLE IF NOT EXISTS order_items (
     INDEX idx_order_items_order_id (order_id),
     INDEX idx_order_items_product_id (product_id),
     INDEX idx_order_items_variant_id (variant_id)
-) ENGINE=InnoDB;
+    ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS otp_records (
-    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
-    challenge_id        VARCHAR(36)                            NOT NULL,
+                                           id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                           challenge_id        VARCHAR(36)                            NOT NULL,
     otp_hash            VARCHAR(255)                           NOT NULL,
     attempt_count       INT                                    NOT NULL DEFAULT 0,
     status              ENUM ('ACTIVE', 'USED', 'INVALIDATED') NOT NULL DEFAULT 'ACTIVE',
@@ -204,45 +224,51 @@ CREATE TABLE IF NOT EXISTS otp_records (
     created_at          DATETIME(3)                            NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT chk_otp_records_attempt_count CHECK (attempt_count >= 0),
     CONSTRAINT chk_otp_records_used_state CHECK (
-        (status = 'USED' AND used_at IS NOT NULL)
-        OR (status <> 'USED' AND used_at IS NULL)
+(status = 'USED' AND used_at IS NOT NULL)
+    OR (status <> 'USED' AND used_at IS NULL)
     ),
     INDEX idx_otp_record_challenge_id (challenge_id),
     INDEX idx_otp_records_status_expires (status, expires_at)
-) ENGINE=InnoDB;
+    ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS bk_generator (
-    entity_type VARCHAR(50) PRIMARY KEY,
+                                            entity_type VARCHAR(50) PRIMARY KEY,
     prefix      VARCHAR(10) NOT NULL,
     last_val    BIGINT      NOT NULL DEFAULT 0,
     pad_length  TINYINT     NOT NULL DEFAULT 7
-) ENGINE=InnoDB;
+    ) ENGINE=InnoDB;
 
 INSERT IGNORE INTO bk_generator (entity_type, prefix, last_val, pad_length) VALUES
     ('CUSTOMER', 'KHG', 999, 7),
     ('ADMIN',    'ADM', 1,   4),
     ('ADDRESS',  'DCH', 0,   7),
     ('ORDER',    'ORD', 0,   7),
-    ('PRODUCT',  'SP',  0,   7);
+    ('PRODUCT',  'SP',  0,   7),
+    ('SUPPLIER', 'NCC', 0,   7);
+
+INSERT INTO suppliers (supplier_code, name, contact_person, phone, email, address, is_active, created_at, updated_at) VALUES
+                                                                                                                          ('NCC-0000001', 'Công ty TNHH Thức Ăn Thú Cưng Việt Nam', 'Nguyễn Văn Bình', '0901234567', 'binh.nguyen@petfoodvn.com', '123 Nguyễn Văn Linh, Quận 7, TP.HCM', TRUE, NOW(3), NOW(3)),
+                                                                                                                          ('NCC-0000002', 'Công ty CP Phụ Kiện Thú Cưng Việt', 'Trần Thị Hoa', '0912345678', 'hoa.tran@petaccessory.vn', '45 Lê Văn Việt, TP. Thủ Đức, TP.HCM', TRUE, NOW(3), NOW(3)),
+                                                                                                                          ('NCC-0000003', 'Royal Canin Việt Nam', 'Lê Minh Khoa', '0987654321', 'khoa.le@royalcanin.com', '88 Điện Biên Phủ, Quận Bình Thạnh, TP.HCM', TRUE, NOW(3), NOW(3));
 
 INSERT INTO categories (name, description, is_active, created_at, updated_at) VALUES
-    ('Thức ăn', 'Thức ăn dinh dưỡng cho mọi loại thú cưng', TRUE, NOW(3), NOW(3)),
-    ('Đồ chơi', 'Đồ chơi thú vị để thú cưng vui chơi', TRUE, NOW(3), NOW(3)),
-    ('Phụ kiện', 'Phụ kiện chăm sóc và làm đẹp cho thú cưng', TRUE, NOW(3), NOW(3));
+                                                                                  ('Thức ăn', 'Thức ăn dinh dưỡng cho mọi loại thú cưng', TRUE, NOW(3), NOW(3)),
+                                                                                  ('Đồ chơi', 'Đồ chơi thú vị để thú cưng vui chơi', TRUE, NOW(3), NOW(3)),
+                                                                                  ('Phụ kiện', 'Phụ kiện chăm sóc và làm đẹp cho thú cưng', TRUE, NOW(3), NOW(3));
 
-INSERT INTO products (category_id, name, description, status, created_at, updated_at) VALUES
-    ((SELECT id FROM categories WHERE name = 'Thức ăn' LIMIT 1), 'Royal Canin Chó Trưởng Thành', 'Thức ăn hạt cao cấp cho chó trưởng thành, bổ sung đầy đủ dưỡng chất', 'ACTIVE', NOW(3), NOW(3)),
-    ((SELECT id FROM categories WHERE name = 'Thức ăn' LIMIT 1), 'Whiskas Mèo Trưởng Thành Cá Ngừ', 'Thức ăn ướt cho mèo trưởng thành, hương vị cá ngừ tươi ngon', 'ACTIVE', NOW(3), NOW(3)),
-    ((SELECT id FROM categories WHERE name = 'Thức ăn' LIMIT 1), 'Tetra Min Thức Ăn Cá Cảnh', 'Thức ăn dạng vảy đa năng cho cá cảnh nhiệt đới', 'ACTIVE', NOW(3), NOW(3)),
-    ((SELECT id FROM categories WHERE name = 'Đồ chơi' LIMIT 1), 'Bóng Cao Su Tương Tác Cho Chó', 'Bóng cao su tự nhiên, bền bỉ, kích thích vận động cho chó', 'ACTIVE', NOW(3), NOW(3)),
-    ((SELECT id FROM categories WHERE name = 'Đồ chơi' LIMIT 1), 'Đũa Lông Vũ Câu Mèo', 'Đồ chơi câu mèo với lông vũ sặc sỡ, kích thích bản năng săn mồi', 'ACTIVE', NOW(3), NOW(3)),
-    ((SELECT id FROM categories WHERE name = 'Đồ chơi' LIMIT 1), 'Bánh Xe Chạy Cho Hamster', 'Bánh xe im lặng, giúp hamster vận động mỗi ngày', 'ACTIVE', NOW(3), NOW(3)),
-    ((SELECT id FROM categories WHERE name = 'Phụ kiện' LIMIT 1), 'Vòng Cổ Chó Da Thật', 'Vòng cổ da bò tự nhiên, chắc chắn và thời trang cho chó', 'ACTIVE', NOW(3), NOW(3)),
-    ((SELECT id FROM categories WHERE name = 'Phụ kiện' LIMIT 1), 'Sữa Tắm Thú Cưng Bio-Pet', 'Sữa tắm thiên nhiên, an toàn cho da nhạy cảm, hương thơm dịu nhẹ', 'ACTIVE', NOW(3), NOW(3)),
-    ((SELECT id FROM categories WHERE name = 'Phụ kiện' LIMIT 1), 'Túi Vận Chuyển Thú Cưng', 'Túi thoáng khí, tiện lợi cho việc di chuyển cùng thú cưng', 'ACTIVE', NOW(3), NOW(3));
+INSERT INTO products (category_id, supplier_id, name, description, status, created_at, updated_at) VALUES
+                                                                                                       ((SELECT id FROM categories WHERE name = 'Thức ăn' LIMIT 1), (SELECT id FROM suppliers WHERE supplier_code = 'NCC-0000003' LIMIT 1), 'Royal Canin Chó Trưởng Thành', 'Thức ăn hạt cao cấp cho chó trưởng thành, bổ sung đầy đủ dưỡng chất', 'ACTIVE', NOW(3), NOW(3)),
+    ((SELECT id FROM categories WHERE name = 'Thức ăn' LIMIT 1), (SELECT id FROM suppliers WHERE supplier_code = 'NCC-0000001' LIMIT 1), 'Whiskas Mèo Trưởng Thành Cá Ngừ', 'Thức ăn ướt cho mèo trưởng thành, hương vị cá ngừ tươi ngon', 'ACTIVE', NOW(3), NOW(3)),
+    ((SELECT id FROM categories WHERE name = 'Thức ăn' LIMIT 1), (SELECT id FROM suppliers WHERE supplier_code = 'NCC-0000001' LIMIT 1), 'Tetra Min Thức Ăn Cá Cảnh', 'Thức ăn dạng vảy đa năng cho cá cảnh nhiệt đới', 'ACTIVE', NOW(3), NOW(3)),
+    ((SELECT id FROM categories WHERE name = 'Đồ chơi' LIMIT 1), (SELECT id FROM suppliers WHERE supplier_code = 'NCC-0000002' LIMIT 1), 'Bóng Cao Su Tương Tác Cho Chó', 'Bóng cao su tự nhiên, bền bỉ, kích thích vận động cho chó', 'ACTIVE', NOW(3), NOW(3)),
+    ((SELECT id FROM categories WHERE name = 'Đồ chơi' LIMIT 1), (SELECT id FROM suppliers WHERE supplier_code = 'NCC-0000002' LIMIT 1), 'Đũa Lông Vũ Câu Mèo', 'Đồ chơi câu mèo với lông vũ sặc sỡ, kích thích bản năng săn mồi', 'ACTIVE', NOW(3), NOW(3)),
+    ((SELECT id FROM categories WHERE name = 'Đồ chơi' LIMIT 1), NULL, 'Bánh Xe Chạy Cho Hamster', 'Bánh xe im lặng, giúp hamster vận động mỗi ngày', 'ACTIVE', NOW(3), NOW(3)),
+    ((SELECT id FROM categories WHERE name = 'Phụ kiện' LIMIT 1), (SELECT id FROM suppliers WHERE supplier_code = 'NCC-0000002' LIMIT 1), 'Vòng Cổ Chó Da Thật', 'Vòng cổ da bò tự nhiên, chắc chắn và thời trang cho chó', 'ACTIVE', NOW(3), NOW(3)),
+    ((SELECT id FROM categories WHERE name = 'Phụ kiện' LIMIT 1), NULL, 'Sữa Tắm Thú Cưng Bio-Pet', 'Sữa tắm thiên nhiên, an toàn cho da nhạy cảm, hương thơm dịu nhẹ', 'ACTIVE', NOW(3), NOW(3)),
+    ((SELECT id FROM categories WHERE name = 'Phụ kiện' LIMIT 1), NULL, 'Túi Vận Chuyển Thú Cưng', 'Túi thoáng khí, tiện lợi cho việc di chuyển cùng thú cưng', 'ACTIVE', NOW(3), NOW(3));
 
 INSERT INTO product_variants (product_id, name, price, available_stock, status, created_at, updated_at) VALUES
-    ((SELECT id FROM products WHERE name = 'Royal Canin Chó Trưởng Thành' LIMIT 1), 'Gói 1kg', 185000, 50, 'ACTIVE', NOW(3), NOW(3)),
+                                                                                                            ((SELECT id FROM products WHERE name = 'Royal Canin Chó Trưởng Thành' LIMIT 1), 'Gói 1kg', 185000, 50, 'ACTIVE', NOW(3), NOW(3)),
     ((SELECT id FROM products WHERE name = 'Royal Canin Chó Trưởng Thành' LIMIT 1), 'Gói 3kg', 490000, 30, 'ACTIVE', NOW(3), NOW(3)),
     ((SELECT id FROM products WHERE name = 'Royal Canin Chó Trưởng Thành' LIMIT 1), 'Gói 10kg', 1350000, 10, 'ACTIVE', NOW(3), NOW(3)),
     ((SELECT id FROM products WHERE name = 'Whiskas Mèo Trưởng Thành Cá Ngừ' LIMIT 1), 'Hộp 85g', 22000, 100, 'ACTIVE', NOW(3), NOW(3)),
@@ -339,53 +365,53 @@ INSERT IGNORE INTO orders (
     order_code, user_id, recipient_name, recipient_phone, delivery_address,
     shipping_fee, subtotal, total_amount, order_status, payment_status, payment_method, note, created_at
 ) SELECT
-    'ORD-0000001', id, 'Nguyen Van An', '0900000001', 'Linh Trung, Thu Duc, TP HCM',
-    30000.00, 220000.00, 250000.00, 'NEW', 'UNPAID', 'COD', 'Giao giờ hành chính', '2026-05-01 09:15:00.000'
-FROM users
-WHERE user_code = 'KHG-0000001';
+                                                       'ORD-0000001', id, 'Nguyen Van An', '0900000001', 'Linh Trung, Thu Duc, TP HCM',
+                                                       30000.00, 220000.00, 250000.00, 'NEW', 'UNPAID', 'COD', 'Giao giờ hành chính', '2026-05-01 09:15:00.000'
+  FROM users
+  WHERE user_code = 'KHG-0000001';
 
 INSERT IGNORE INTO orders (
     order_code, user_id, recipient_name, recipient_phone, delivery_address,
     shipping_fee, subtotal, total_amount, order_status, payment_status, payment_method, note, created_at
 ) SELECT
-    'ORD-0000002', id, 'Nguyen Van An', '0900000001', 'Khu Công Nghệ Cao, Thủ Đức, TP HCM',
-    22000.00, 185000.00, 207000.00, 'SHIPPING', 'PAID', 'VNPAY', NULL, '2026-06-10 14:02:00.000'
-FROM users
-WHERE user_code = 'KHG-0000001';
+             'ORD-0000002', id, 'Nguyen Van An', '0900000001', 'Khu Công Nghệ Cao, Thủ Đức, TP HCM',
+             22000.00, 185000.00, 207000.00, 'SHIPPING', 'PAID', 'VNPAY', NULL, '2026-06-10 14:02:00.000'
+  FROM users
+  WHERE user_code = 'KHG-0000001';
 
 INSERT IGNORE INTO orders (
     order_code, user_id, recipient_name, recipient_phone, delivery_address,
     shipping_fee, subtotal, total_amount, order_status, payment_status, payment_method, note, created_at
 ) SELECT
-    'ORD-0000003', id, 'Tran Thi Binh', '0900000002', 'Ben Nghe, Quan 1, TP HCM',
-    25000.00, 865000.00, 890000.00, 'CANCELLED', 'REFUNDED', 'COD', NULL, '2026-04-22 11:47:00.000'
-FROM users
-WHERE user_code = 'KHG-0000002';
+             'ORD-0000003', id, 'Tran Thi Binh', '0900000002', 'Ben Nghe, Quan 1, TP HCM',
+             25000.00, 865000.00, 890000.00, 'CANCELLED', 'REFUNDED', 'COD', NULL, '2026-04-22 11:47:00.000'
+  FROM users
+  WHERE user_code = 'KHG-0000002';
 
 INSERT IGNORE INTO order_items (
     order_id, product_name, variant_name, unit_price, quantity, subtotal, product_id, variant_id, created_at
 ) SELECT
-    o.id, 'Whiskas Mèo Trưởng Thành Cá Ngừ', 'Hộp 85g', 22000.00, 10, 220000.00, NULL, NULL, '2026-05-01 09:15:00.000'
-FROM orders o
-WHERE o.order_code = 'ORD-0000001';
+             o.id, 'Whiskas Mèo Trưởng Thành Cá Ngừ', 'Hộp 85g', 22000.00, 10, 220000.00, NULL, NULL, '2026-05-01 09:15:00.000'
+  FROM orders o
+  WHERE o.order_code = 'ORD-0000001';
 
 INSERT IGNORE INTO order_items (
     order_id, product_name, variant_name, unit_price, quantity, subtotal, product_id, variant_id, created_at
 ) SELECT
-    o.id, 'Royal Canin Chó Trưởng Thành', 'Gói 1kg', 185000.00, 1, 185000.00, NULL, NULL, '2026-06-10 14:02:00.000'
-FROM orders o
-WHERE o.order_code = 'ORD-0000002';
+             o.id, 'Royal Canin Chó Trưởng Thành', 'Gói 1kg', 185000.00, 1, 185000.00, NULL, NULL, '2026-06-10 14:02:00.000'
+  FROM orders o
+  WHERE o.order_code = 'ORD-0000002';
 
 INSERT IGNORE INTO order_items (
     order_id, product_name, variant_name, unit_price, quantity, subtotal, product_id, variant_id, created_at
 ) SELECT
-    o.id, 'Bánh Xe Chạy Cho Hamster', 'Đường kính 21cm - Hồng', 125000.00, 4, 500000.00, NULL, NULL, '2026-04-22 11:47:00.000'
-FROM orders o
-WHERE o.order_code = 'ORD-0000003';
+             o.id, 'Bánh Xe Chạy Cho Hamster', 'Đường kính 21cm - Hồng', 125000.00, 4, 500000.00, NULL, NULL, '2026-04-22 11:47:00.000'
+  FROM orders o
+  WHERE o.order_code = 'ORD-0000003';
 
 INSERT IGNORE INTO order_items (
     order_id, product_name, variant_name, unit_price, quantity, subtotal, product_id, variant_id, created_at
 ) SELECT
-    o.id, 'Túi Vận Chuyển Thú Cưng', 'Size S (cho chó/mèo < 5kg)', 345000.00, 1, 345000.00, NULL, NULL, '2026-04-22 11:47:00.000'
-FROM orders o
-WHERE o.order_code = 'ORD-0000003';
+             o.id, 'Túi Vận Chuyển Thú Cưng', 'Size S (cho chó/mèo < 5kg)', 345000.00, 1, 345000.00, NULL, NULL, '2026-04-22 11:47:00.000'
+  FROM orders o
+  WHERE o.order_code = 'ORD-0000003';

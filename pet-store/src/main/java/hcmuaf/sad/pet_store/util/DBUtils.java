@@ -1,9 +1,10 @@
 package hcmuaf.sad.pet_store.util;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
-
+@Component
 public class DBUtils {
     private static JdbcTemplate jdbc;
     private static TransactionTemplate tx;

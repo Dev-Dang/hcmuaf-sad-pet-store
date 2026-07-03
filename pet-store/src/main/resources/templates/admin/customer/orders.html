@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Lịch sử đơn hàng</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" th:href="@{/}">Pet Store</a>
+        <nav class="nav">
+            <a th:href="@{/admin/customers}">Quản lý khách hàng</a>
+            <form class="inline-form" th:action="@{/logout}" method="post">
+                <button class="secondary" type="submit">Đăng xuất</button>
+            </form>
+        </nav>
+    </div>
+</header>
+
+<main class="page stack">
+    <div class="actions">
+        <h1>Lịch sử đơn hàng</h1>
+        <a class="button secondary" th:href="@{/admin/customers/{userCode}(userCode=${userCode})}">Quay lại chi tiết</a>
+    </div>
+
+    <section class="panel" th:if="${emptyResult}">
+        <p>Khách hàng này chưa có đơn hàng nào.</p>
+    </section>
+
+    <section class="panel" th:unless="${#lists.isEmpty(orders)}">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Mã đơn hàng</th>
+                <th>Ngày tạo</th>
+                <th>Trạng thái đơn</th>
+                <th>Trạng thái thanh toán</th>
+                <th>Tổng tiền</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="order : ${orders}">
+                <td th:text="${order.orderCode}">ORD-0000001</td>
+                <td th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">01/05/2026 09:15</td>
+                <td th:text="${order.orderStatus}">DELIVERED</td>
+                <td th:text="${order.paymentStatus}">PAID</td>
+                <td th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')}">1250000</td>
+                <td><a th:href="@{/admin/orders/{orderCode}(orderCode=${order.orderCode})}">Chi tiết</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <nav class="pagination" th:if="${totalPages > 1}">
+        <a class="button secondary"
+           th:if="${page > 1}"
+           th:href="@{/admin/customers/{userCode}/orders(userCode=${userCode}, page=${page - 1})}">Trước</a>
+        <span th:text="|Trang ${page}/${totalPages}|">Trang 1/1</span>
+        <a class="button secondary"
+           th:if="${page < totalPages}"
+           th:href="@{/admin/customers/{userCode}/orders(userCode=${userCode}, page=${page + 1})}">Sau</a>
+    </nav>
+</main>
+</body>
+</html>

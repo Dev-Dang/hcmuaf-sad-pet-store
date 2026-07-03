@@ -79,6 +79,67 @@ public class User extends BaseEntity {
         }
     }
 
+    public static List<User> findActiveCustomers(int page, int size) {
+        try {
+            int offset = offset(page, size);
+            return DBUtils.jdbc().query("""
+                    SELECT * FROM users
+                    WHERE role = 'CUSTOMER' AND is_current = true AND is_deleted = false
+                    ORDER BY created_at DESC
+                    LIMIT ? OFFSET ?
+                    """, ROW_MAPPER, size, offset);
+        } catch (DataAccessException e) {
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
+        }
+    }
+
+    public static int countActiveCustomers() {
+        try {
+            Integer count = DBUtils.jdbc().queryForObject("""
+                    SELECT COUNT(*) FROM users
+                    WHERE role = 'CUSTOMER' AND is_current = true AND is_deleted = false
+                    """, Integer.class);
+            return count == null ? 0 : count;
+        } catch (DataAccessException e) {
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
+        }
+    }
+
+    public static List<User> searchActiveCustomers(String keyword, int page, int size) {
+        try {
+            int offset = offset(page, size);
+            String pattern = "%" + keyword.toLowerCase() + "%";
+            return DBUtils.jdbc().query("""
+                    SELECT * FROM users
+                    WHERE role = 'CUSTOMER' AND is_current = true AND is_deleted = false
+                      AND (LOWER(display_name) LIKE ? OR LOWER(email) LIKE ?)
+                    ORDER BY created_at DESC
+                    LIMIT ? OFFSET ?
+                    """, ROW_MAPPER, pattern, pattern, size, offset);
+        } catch (DataAccessException e) {
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
+        }
+    }
+
+    public static int countActiveCustomersByKeyword(String keyword) {
+        try {
+            String pattern = "%" + keyword.toLowerCase() + "%";
+            Integer count = DBUtils.jdbc().queryForObject("""
+                    SELECT COUNT(*) FROM users
+                    WHERE role = 'CUSTOMER' AND is_current = true AND is_deleted = false
+                      AND (LOWER(display_name) LIKE ? OR LOWER(email) LIKE ?)
+                    """, Integer.class, pattern, pattern);
+            return count == null ? 0 : count;
+        } catch (DataAccessException e) {
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
+        }
+    }
+
+    private static int offset(int page, int size) {
+        int safePage = Math.max(page, 1);
+        return (safePage - 1) * size;
+    }
+
     public static User findActiveByUserId(String userId) {
         // TODO: UC-2/3
         throw new UnsupportedOperationException("TODO: UC-2/3");

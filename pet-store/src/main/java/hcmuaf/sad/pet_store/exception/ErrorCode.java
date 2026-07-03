@@ -15,6 +15,7 @@ public enum ErrorCode {
     ADDRESS_NOT_FOUND("Địa chỉ không tồn tại."),
     ADDRESS_IS_DEFAULT("Không thể xóa địa chỉ mặc định."),
     ADDRESS_COORDS_MISSING("Không tìm thấy tọa độ địa chỉ."),
+    CUSTOMER_NOT_FOUND("Khách hàng không tồn tại."),
     GOONG_MAPS_ERROR("Không thể kết nối dịch vụ bản đồ. Vui lòng thử lại."),
     GOOGLE_AUTH_FAILED("Đăng nhập bằng Google không thành công. Vui lòng thử lại."),
     GOOGLE_ACCESS_DENIED("Không thể đăng nhập bằng Google với tài khoản này. Vui lòng thử phương thức đăng nhập khác."),

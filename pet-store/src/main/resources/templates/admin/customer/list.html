@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tra cứu khách hàng</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" th:href="@{/}">Pet Store</a>
+        <nav class="nav">
+            <a th:href="@{/admin/customers}">Quản lý khách hàng</a>
+            <form class="inline-form" th:action="@{/logout}" method="post">
+                <button class="secondary" type="submit">Đăng xuất</button>
+            </form>
+        </nav>
+    </div>
+</header>
+
+<main class="page stack">
+    <div class="actions">
+        <h1>Tra cứu khách hàng</h1>
+    </div>
+
+    <form class="panel search-form" th:action="@{/admin/customers}" method="get">
+        <label for="keyword">Tên hoặc email</label>
+        <input id="keyword" name="keyword" type="search" th:value="${keyword}" placeholder="Nhập từ khóa">
+        <button type="submit">Tìm kiếm</button>
+        <a class="button secondary" th:href="@{/admin/customers}">Xóa lọc</a>
+    </form>
+
+    <section class="panel" th:if="${emptyResult}">
+        <p>Không tìm thấy khách hàng nào khớp với từ khóa.</p>
+    </section>
+
+    <section class="panel" th:unless="${#lists.isEmpty(customers)}">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Mã khách hàng</th>
+                <th>Tên hiển thị</th>
+                <th>Email</th>
+                <th>Ngày tạo</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="customer : ${customers}">
+                <td th:text="${customer.userCode}">KHG-0000001</td>
+                <td th:text="${customer.displayName}">Nguyen Van An</td>
+                <td th:text="${customer.email}">an.nguyen@example.com</td>
+                <td th:text="${#temporals.format(customer.createdAt, 'dd/MM/yyyy HH:mm')}">01/05/2026 09:00</td>
+                <td><a th:href="@{/admin/customers/{userCode}(userCode=${customer.userCode})}">Chi tiết</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <nav class="pagination" th:if="${totalPages > 1}">
+        <a class="button secondary"
+           th:if="${page > 1}"
+           th:href="@{/admin/customers(page=${page - 1}, keyword=${keyword})}">Trước</a>
+        <span th:text="|Trang ${page}/${totalPages}|">Trang 1/1</span>
+        <a class="button secondary"
+           th:if="${page < totalPages}"
+           th:href="@{/admin/customers(page=${page + 1}, keyword=${keyword})}">Sau</a>
+    </nav>
+</main>
+</body>
+</html>

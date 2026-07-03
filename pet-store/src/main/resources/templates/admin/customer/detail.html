@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chi tiết khách hàng</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" th:href="@{/}">Pet Store</a>
+        <nav class="nav">
+            <a th:href="@{/admin/customers}">Quản lý khách hàng</a>
+            <form class="inline-form" th:action="@{/logout}" method="post">
+                <button class="secondary" type="submit">Đăng xuất</button>
+            </form>
+        </nav>
+    </div>
+</header>
+
+<main class="page stack">
+    <div class="actions">
+        <h1 th:text="${customer.displayName}">Nguyen Van An</h1>
+        <a class="button secondary" th:href="@{/admin/customers}">Quay lại</a>
+        <a class="button" th:href="@{/admin/customers/{userCode}/orders(userCode=${customer.userCode})}">Lịch sử đơn hàng</a>
+    </div>
+
+    <section class="panel detail-grid">
+        <div>
+            <span class="muted">Mã khách hàng</span>
+            <strong th:text="${customer.userCode}">KHG-0000001</strong>
+        </div>
+        <div>
+            <span class="muted">Email</span>
+            <strong th:text="${customer.email}">an.nguyen@example.com</strong>
+        </div>
+        <div>
+            <span class="muted">Số điện thoại</span>
+            <strong th:text="${customer.phone ?: 'Chưa có'}">0900000001</strong>
+        </div>
+        <div>
+            <span class="muted">Ngày tạo</span>
+            <strong th:text="${#temporals.format(customer.createdAt, 'dd/MM/yyyy HH:mm')}">01/05/2026 09:00</strong>
+        </div>
+        <div class="detail-wide">
+            <span class="muted">Địa chỉ mặc định</span>
+            <strong th:text="${customer.address ?: 'Chưa có'}">Linh Trung, Thu Duc, TP HCM</strong>
+        </div>
+        <div>
+            <span class="muted">Tổng số đơn</span>
+            <strong th:text="${customer.orderCount}">2</strong>
+        </div>
+        <div>
+            <span class="muted">Tổng giá trị đơn hàng</span>
+            <strong th:text="${#numbers.formatDecimal(customer.totalOrderValue, 0, 'COMMA', 0, 'POINT')}">1780000</strong>
+        </div>
+    </section>
+</main>
+</body>
+</html>

@@ -140,6 +140,62 @@ button.danger {
     background: #b91c1c;
 }
 
+.search-form {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: end;
+    gap: 10px;
+}
+
+.search-form label {
+    grid-column: 1 / -1;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #edf0f4;
+    text-align: left;
+    vertical-align: top;
+}
+
+.data-table th {
+    color: #4b5563;
+    font-size: 0.92rem;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.detail-grid > div {
+    display: grid;
+    gap: 4px;
+}
+
+.detail-wide {
+    grid-column: 1 / -1;
+}
+
+.muted {
+    color: #6b7280;
+    font-size: 0.92rem;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
 .inline-form {
     display: inline;
 }
@@ -185,4 +241,17 @@ button.danger {
 
 #suggestions li:hover {
     background: #eef7f5;
+}
+
+@media (max-width: 720px) {
+    .search-form,
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .data-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
 }

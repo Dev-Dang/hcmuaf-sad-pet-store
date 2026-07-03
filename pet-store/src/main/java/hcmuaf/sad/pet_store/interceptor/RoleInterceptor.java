@@ -25,7 +25,13 @@ public class RoleInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        // Khu vực admin: yêu cầu role ADMIN
+        // Khu vực admin: phiên hết hạn thì quay lại đăng nhập, sai role thì chặn quyền.
+        if (userCode == null || role == null) {
+            // [23.7.1+23.7.2] Hiển thị thông báo hết hạn phiên, điều hướng đăng nhập
+            response.sendRedirect("/auth/login?expired=true");
+            return false;
+        }
+
         if (!"ADMIN".equals(role)) {
             response.sendRedirect("/error/403");
             return false;

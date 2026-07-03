@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS users (
         OR (is_current = FALSE AND effective_to IS NOT NULL)
     ),
     INDEX idx_users_email_current (email, is_current, is_deleted),
-    INDEX idx_users_user_code_current (user_code, is_current, is_deleted)
+    INDEX idx_users_user_code_current (user_code, is_current, is_deleted),
+    INDEX idx_users_role_current_created (role, is_current, is_deleted, created_at)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS user_credential (
@@ -100,6 +101,18 @@ CREATE TABLE IF NOT EXISTS otp_challenges (
     INDEX idx_otp_challenges_status_expires (status, expires_at)
 ) ENGINE=InnoDB;
 
+-- Temporary UC-23 table. Replace with the official Order schema when available.
+CREATE TABLE IF NOT EXISTS orders (
+    order_code      VARCHAR(20)   PRIMARY KEY,
+    user_code       VARCHAR(20)   NOT NULL,
+    order_status    VARCHAR(20)   NOT NULL DEFAULT 'PENDING',
+    payment_status  VARCHAR(20)   NOT NULL DEFAULT 'UNPAID',
+    total_amount    DECIMAL(12,2) NOT NULL DEFAULT 0,
+    created_at      DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    CONSTRAINT fk_orders_user_code FOREIGN KEY (user_code) REFERENCES users(user_code),
+    INDEX idx_orders_user_code_created_at (user_code, created_at)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS otp_records (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     challenge_id        VARCHAR(36)                            NOT NULL,
@@ -150,3 +163,30 @@ INSERT IGNORE INTO user_credential (
     '$argon2id$v=19$m=16384,t=2,p=1$2fZhLkK7uZxvf35f08iTIQ$UMfmwUPCPeEQfT8qhsjOpqyxdpETzdBxPZNyzwhq42k',
     NOW(3)
 );
+
+INSERT IGNORE INTO users (
+    user_code, email, display_name, role,
+    effective_from, effective_to, is_current, is_deleted, created_at
+) VALUES
+    ('KHG-0000001', 'an.nguyen@example.com', 'Nguyen Van An', 'CUSTOMER', NOW(3), NULL, TRUE, FALSE, '2026-05-01 09:00:00.000'),
+    ('KHG-0000002', 'binh.tran@example.com', 'Tran Thi Binh', 'CUSTOMER', NOW(3), NULL, TRUE, FALSE, '2026-05-03 10:00:00.000'),
+    ('KHG-0000003', 'chi.le@example.com', 'Le Minh Chi', 'CUSTOMER', NOW(3), NULL, TRUE, FALSE, '2026-05-05 11:00:00.000');
+
+INSERT IGNORE INTO shipping_addresses (
+    address_id, user_code, recipient_name, phone, place_id, full_address,
+    address_detail, latitude, longitude, is_default,
+    effective_from, effective_to, is_current, is_deleted, created_at
+) VALUES
+    ('DCH-0000001', 'KHG-0000001', 'Nguyen Van An', '0900000001', 'place-khg-1',
+     'Linh Trung, Thu Duc, TP HCM', 'So 1', 10.87000000, 106.80000000, TRUE,
+     NOW(3), NULL, TRUE, FALSE, NOW(3)),
+    ('DCH-0000002', 'KHG-0000002', 'Tran Thi Binh', '0900000002', 'place-khg-2',
+     'Ben Nghe, Quan 1, TP HCM', 'Tang 2', 10.77500000, 106.70000000, TRUE,
+     NOW(3), NULL, TRUE, FALSE, NOW(3));
+
+INSERT IGNORE INTO orders (
+    order_code, user_code, order_status, payment_status, total_amount, created_at
+) VALUES
+    ('ORD-0000001', 'KHG-0000001', 'DELIVERED', 'PAID', 1250000.00, '2026-05-01 09:15:00.000'),
+    ('ORD-0000002', 'KHG-0000001', 'SHIPPING', 'PAID', 530000.00, '2026-06-10 14:02:00.000'),
+    ('ORD-0000003', 'KHG-0000002', 'CANCELLED', 'REFUNDED', 890000.00, '2026-04-22 11:47:00.000');

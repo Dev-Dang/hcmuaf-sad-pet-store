@@ -1,25 +1,20 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đơn hàng của tôi - Pet Store</title>
-    <link rel="stylesheet" href="/css/index.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" th:href="@{/css/customer.css}">
 </head>
 <body>
-
-<nav class="navbar">
-    <div class="logo">🐾 PetStore</div>
-    <div class="nav-links">
-        <a href="/products">Sản phẩm</a>
-        <a href="/cart" class="cart-icon">🛒 Giỏ hàng <span class="badge" id="cart-count" style="display:none">0</span></a>
-        <a href="/orders" class="active">📦 Đơn hàng</a>
-        <a href="/logout" sec:authorize="isAuthenticated()">Đăng xuất</a>
-    </div>
-</nav>
+<header th:replace="~{fragments/navigation :: customerHeader('orders')}"></header>
 
 <div class="page-container">
-    <h1 class="section-title" style="margin-bottom: 2rem;">Đơn hàng của tôi</h1>
+    <h1 class="page-title">Đơn hàng của tôi</h1>
+    <p class="page-subtitle">Theo dõi lịch sử và trạng thái đơn hàng của bạn</p>
     <div id="orders-list">
         <div class="state-box">⏳ Đang tải danh sách đơn hàng...</div>
     </div>
@@ -56,16 +51,16 @@
         }
 
         container.innerHTML = orders.map(o => `
-            <div class="product-detail-card" style="margin-bottom: 1.5rem; display: block;">
-                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1rem;">
+            <div class="product-detail-card" style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid #edf0f4; padding-bottom: 1rem; margin-bottom: 1rem;">
                     <div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem;">Ngày đặt: ${new Date(o.createdAt).toLocaleString()}</div>
-                        <h3 style="margin-top: 0.5rem;">Đơn hàng #${o.id}</h3>
+                        <div style="color: #6b7280; font-size: 0.9rem;">Ngày đặt: ${new Date(o.createdAt).toLocaleString()}</div>
+                        <h3 style="margin: 8px 0 0;">Đơn hàng #${o.id}</h3>
                     </div>
                     <div style="text-align: right;">
                         <span class="v-stock" style="margin-bottom: 0.5rem; display: inline-block;">Trạng thái: ${o.orderStatusLabel}</span>
                         <br>
-                        <span class="out-of-stock-badge" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color);">Thanh toán: ${o.paymentStatusLabel}</span>
+                        <span class="out-of-stock-badge" style="background: #fff; color: #1a1a2e; border: 1px solid #d9dee5;">Thanh toán: ${o.paymentStatusLabel}</span>
                     </div>
                 </div>
                 
@@ -73,15 +68,15 @@
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                         <div>
                             <span>${i.productName} ${i.variantName ? ' - ' + i.variantName : ''}</span>
-                            <span style="color: var(--text-secondary); font-size: 0.9rem;">x ${i.quantity}</span>
+                            <span style="color: #6b7280; font-size: 0.9rem;">x ${i.quantity}</span>
                         </div>
-                        <div class="v-price" style="font-size: 1.1rem;">${fmt(i.subtotal)}</div>
+                        <div style="font-size: 1.1rem; color: #0f766e; font-weight: 600;">${fmt(i.subtotal)}</div>
                     </div>
                 `).join('')}
                 
                 <div style="display: flex; justify-content: space-between; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <div style="color: var(--text-secondary);">Tổng thanh toán:</div>
-                    <div class="v-price" style="font-size: 1.3rem;">${fmt(o.totalAmount)}</div>
+                    <div style="color: #6b7280;">Tổng thanh toán:</div>
+                    <div style="font-size: 1.3rem; color: #0f766e; font-weight: 700;">${fmt(o.totalAmount)}</div>
                 </div>
                 
                 <div style="margin-top: 1rem; text-align: right;">

@@ -23,4 +23,10 @@ public class OrderPageController {
     public String adminOrdersPage() {
         return "admin/admin-orders";
     }
+
+    @GetMapping("/admin/orders/{id}")
+    public String adminOrderDetailPage(@PathVariable Long id, Model model) {
+        model.addAttribute("orderId", id);
+        return "admin/order-detail";
+    }
 }

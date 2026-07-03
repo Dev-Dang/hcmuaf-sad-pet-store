@@ -14,9 +14,11 @@ import java.util.List;
 @Table(name = "orders")
 public class Order extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "order_code", nullable = false, unique = true, length = 20)
+    private String orderCode;
+
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     // Snapshot address at time of order
     @Column(name = "recipient_name")

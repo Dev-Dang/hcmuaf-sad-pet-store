@@ -3,16 +3,15 @@ package hcmuaf.sad.pet_store.service.impl;
 import hcmuaf.sad.pet_store.dto.response.OrderResponse;
 import hcmuaf.sad.pet_store.entity.Order;
 import hcmuaf.sad.pet_store.entity.OrderItem;
-import hcmuaf.sad.pet_store.exception.resource.ResourceNotFoundException;
+import hcmuaf.sad.pet_store.exception.ResourceNotFoundException;
+import hcmuaf.sad.pet_store.model.User;
 import hcmuaf.sad.pet_store.repository.OrderRepository;
 import hcmuaf.sad.pet_store.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,17 +24,16 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
 
     @Override
-    public Page<OrderResponse> getMyOrders(Long userId, Pageable pageable) {
-        return orderRepository.findByUserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId, pageable)
+    public Page<OrderResponse> getMyOrders(String userCode, Pageable pageable) {
+        return orderRepository.findByUserCodeAndDeletedAtIsNullOrderByCreatedAtDesc(userCode, pageable)
                 .map(o -> toResponse(o, false));
     }
 
     @Override
-    public OrderResponse getMyOrderDetail(Long orderId, Long userId) {
+    public OrderResponse getMyOrderDetail(Long orderId, String userCode) {
         // BRULE-08: Customer can only view their own orders (EX.2)
-        Order order = orderRepository.findByIdAndUserIdAndDeletedAtIsNull(orderId, userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "Đơn hàng không tồn tại hoặc bạn không có quyền truy cập"));
+        Order order = orderRepository.findByIdAndUserCodeAndDeletedAtIsNull(orderId, userCode)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", orderId));
         return toResponse(order, false);
     }
 
@@ -62,6 +60,7 @@ public class OrderServiceImpl implements OrderService {
 
         OrderResponse.OrderResponseBuilder builder = OrderResponse.builder()
                 .id(order.getId())
+                .orderCode(order.getOrderCode())
                 .orderStatus(order.getOrderStatus().name())
                 .orderStatusLabel(order.getOrderStatus().getLabel())
                 .paymentStatus(order.getPaymentStatus().name())
@@ -77,9 +76,12 @@ public class OrderServiceImpl implements OrderService {
                 .createdAt(order.getCreatedAt())
                 .items(itemResponses);
 
-        if (includeCustomerInfo && order.getUser() != null) {
-            builder.customerEmail(order.getUser().getEmail())
-                   .customerName(order.getUser().getFullName());
+        if (includeCustomerInfo) {
+            User customer = User.findById(order.getUserId());
+            if (customer != null) {
+                builder.customerEmail(customer.getEmail())
+                       .customerName(customer.getDisplayName());
+            }
         }
 
         return builder.build();

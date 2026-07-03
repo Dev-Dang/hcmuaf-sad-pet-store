@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 
 @Data
 public class CustomerOrderHistoryItemDto {
+    private Long orderId;
     private String orderCode;
     private LocalDateTime createdAt;
     private String orderStatus;

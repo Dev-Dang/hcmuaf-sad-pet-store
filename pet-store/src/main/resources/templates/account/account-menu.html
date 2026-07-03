@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tài khoản của tôi</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/navigation :: customerHeader('account')}"></header>
+
+<main class="page stack">
+    <div class="actions">
+        <h1>Tài khoản của tôi</h1>
+    </div>
+
+    <section class="panel stack">
+        <a class="button secondary" th:href="@{/account/addresses}">Quản lý địa chỉ giao hàng</a>
+        <a class="button secondary" th:href="@{/orders}">Lịch sử đơn hàng</a>
+        <a class="button secondary" th:href="@{/cart}">Giỏ hàng</a>
+    </section>
+</main>
+</body>
+</html>

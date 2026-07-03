@@ -1,6 +1,8 @@
 package hcmuaf.sad.pet_store.exception;
 
+import hcmuaf.sad.pet_store.dto.response.ApiResponse;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -21,10 +23,13 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    // Lỗi nghiệp vụ không được xử lý tại Controller.
+    // Lỗi nghiệp vụ/hệ thống không được xử lý tại Controller.
     @ExceptionHandler(AppException.class)
-    public ModelAndView handleAppException(AppException ex) {
+    public Object handleAppException(AppException ex, HttpServletRequest request) {
         log.warn("AppException [{}]", ex.getErrorCode(), ex);
+        if (isApiRequest(request)) {
+            return apiError(ex);
+        }
         return errorView(ex.getErrorCode().getMessage());
     }
 
@@ -36,8 +41,12 @@ public class GlobalExceptionHandler {
 
     // Lỗi không xác định.
     @ExceptionHandler(Exception.class)
-    public ModelAndView handleException(Exception ex) {
+    public Object handleException(Exception ex, HttpServletRequest request) {
         log.error("Unhandled exception", ex);
+        if (isApiRequest(request)) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(ErrorCode.SYSTEM_ERROR.name(), ErrorCode.SYSTEM_ERROR.getMessage()));
+        }
         return errorView(ErrorCode.SYSTEM_ERROR.getMessage());
     }
 
@@ -62,9 +71,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
-    @ExceptionHandler(BaseException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBaseException(BaseException ex) {
-        return ResponseEntity.status(ex.getHttpStatus())
-                .body(ApiResponse.error(ex.getErrorCode(), ex.getMessage()));
+    private boolean isApiRequest(HttpServletRequest request) {
+        return request.getRequestURI() != null && request.getRequestURI().startsWith("/api/");
+    }
+
+    private ResponseEntity<ApiResponse<Void>> apiError(AppException ex) {
+        HttpStatus status = ex.getHttpStatus() != null ? HttpStatus.valueOf(ex.getHttpStatus()) : defaultStatus(ex);
+        return ResponseEntity.status(status)
+                .body(ApiResponse.error(ex.getErrorCode().name(), ex.getErrorCode().getMessage()));
+    }
+
+    private HttpStatus defaultStatus(AppException ex) {
+        if (ex instanceof BusinessException) {
+            return HttpStatus.BAD_REQUEST;
+        }
+        if (ex instanceof SystemException) {
+            return HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+        return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 }

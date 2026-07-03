@@ -1,6 +1,6 @@
 package hcmuaf.sad.pet_store.exception;
 
-public final class BusinessException extends AppException {
+public class BusinessException extends AppException {
     public BusinessException(ErrorCode errorCode) {
         super(errorCode);
     }

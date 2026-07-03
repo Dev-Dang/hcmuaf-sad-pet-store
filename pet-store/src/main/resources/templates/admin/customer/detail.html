@@ -6,17 +6,7 @@
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
-<header class="topbar">
-    <div class="topbar-inner">
-        <a class="brand" th:href="@{/}">Pet Store</a>
-        <nav class="nav">
-            <a th:href="@{/admin/customers}">Quản lý khách hàng</a>
-            <form class="inline-form" th:action="@{/logout}" method="post">
-                <button class="secondary" type="submit">Đăng xuất</button>
-            </form>
-        </nav>
-    </div>
-</header>
+<header th:replace="~{fragments/navigation :: adminHeader('customers')}"></header>
 
 <main class="page stack">
     <div class="actions">

@@ -1,22 +1,16 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chi tiết đơn hàng - Pet Store</title>
-    <link rel="stylesheet" href="/css/index.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" th:href="@{/css/customer.css}">
 </head>
 <body>
-
-<nav class="navbar">
-    <div class="logo">🐾 PetStore</div>
-    <div class="nav-links">
-        <a href="/products">Sản phẩm</a>
-        <a href="/cart" class="cart-icon">🛒 Giỏ hàng <span class="badge" id="cart-count" style="display:none">0</span></a>
-        <a href="/orders" class="active">📦 Đơn hàng</a>
-        <a href="/logout" sec:authorize="isAuthenticated()">Đăng xuất</a>
-    </div>
-</nav>
+<header th:replace="~{fragments/navigation :: customerHeader('orders')}"></header>
 
 <div class="page-container" id="detail-container">
     <div class="loading-state">⏳ Đang tải thông tin đơn hàng...</div>
@@ -49,8 +43,8 @@
                 <a href="/orders">Đơn hàng</a> / <span>Chi tiết #${o.id}</span>
             </div>
             
-            <div class="product-detail-card" style="display: block;">
-                <h2 style="margin-bottom: 1.5rem;">Chi tiết Đơn hàng #${o.id}</h2>
+            <div class="product-detail-card">
+                <h2 style="margin: 0 0 1.5rem;">Chi tiết Đơn hàng #${o.id}</h2>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
                     <div>
@@ -64,7 +58,7 @@
                         <h3 class="section-title">Trạng thái</h3>
                         <p><strong>Ngày đặt:</strong> ${new Date(o.createdAt).toLocaleString()}</p>
                         <p><strong>Đơn hàng:</strong> <span class="v-stock">${o.orderStatusLabel}</span></p>
-                        <p><strong>Thanh toán:</strong> <span class="out-of-stock-badge" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color);">${o.paymentStatusLabel}</span></p>
+                        <p><strong>Thanh toán:</strong> <span class="out-of-stock-badge" style="background: #fff; color: #1a1a2e; border: 1px solid #d9dee5;">${o.paymentStatusLabel}</span></p>
                         <p><strong>Phương thức TT:</strong> ${o.paymentMethod}</p>
                     </div>
                 </div>
@@ -72,27 +66,27 @@
                 <h3 class="section-title">Sản phẩm đã đặt</h3>
                 <div class="cart-items" style="margin-bottom: 2rem;">
                     ${o.items.map(i => `
-                        <div class="cart-item" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1rem;">
+                        <div class="cart-item" style="justify-content: space-between; align-items: center; padding-left: 0; padding-right: 0;">
                             <div class="ci-info" style="flex: 1;">
                                 <div class="ci-name">${i.productName}</div>
                                 <div class="ci-variant">${i.variantName || 'Mặc định'}</div>
                             </div>
                             <div class="ci-price" style="width: 150px; text-align: right;">${fmt(i.unitPrice)} x ${i.quantity}</div>
-                            <div class="ci-subtotal" style="width: 150px; text-align: right; color: var(--primary-color); font-weight: 600;">${fmt(i.subtotal)}</div>
+                            <div class="ci-subtotal" style="width: 150px; text-align: right; color: #0f766e; font-weight: 700;">${fmt(i.subtotal)}</div>
                         </div>
                     `).join('')}
                 </div>
 
                 <div style="width: 300px; margin-left: auto;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                        <span style="color: var(--text-secondary);">Tạm tính:</span>
+                        <span style="color: #6b7280;">Tạm tính:</span>
                         <span>${fmt(o.subtotal)}</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                        <span style="color: var(--text-secondary);">Phí vận chuyển:</span>
+                        <span style="color: #6b7280;">Phí vận chuyển:</span>
                         <span>${fmt(o.shippingFee)}</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); font-weight: 600; font-size: 1.2rem; color: var(--primary-color);">
+                    <div style="display: flex; justify-content: space-between; padding-top: 1rem; border-top: 1px solid #edf0f4; font-weight: 700; font-size: 1.2rem; color: #0f766e;">
                         <span>Tổng thanh toán:</span>
                         <span>${fmt(o.totalAmount)}</span>
                     </div>

@@ -6,17 +6,7 @@
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
-<header class="topbar">
-    <div class="topbar-inner">
-        <a class="brand" th:href="@{/}">Pet Store</a>
-        <nav class="nav">
-            <a th:href="@{/admin/customers}">Quản lý khách hàng</a>
-            <form class="inline-form" th:action="@{/logout}" method="post">
-                <button class="secondary" type="submit">Đăng xuất</button>
-            </form>
-        </nav>
-    </div>
-</header>
+<header th:replace="~{fragments/navigation :: adminHeader('customers')}"></header>
 
 <main class="page stack">
     <div class="actions">
@@ -47,7 +37,7 @@
                 <td th:text="${order.orderStatus}">DELIVERED</td>
                 <td th:text="${order.paymentStatus}">PAID</td>
                 <td th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')}">1250000</td>
-                <td><a th:href="@{/admin/orders/{orderCode}(orderCode=${order.orderCode})}">Chi tiết</a></td>
+                <td><a th:href="@{/admin/orders/{id}(id=${order.orderId})}">Chi tiết</a></td>
             </tr>
             </tbody>
         </table>

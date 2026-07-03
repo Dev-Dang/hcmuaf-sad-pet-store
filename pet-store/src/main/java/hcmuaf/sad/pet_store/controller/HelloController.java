@@ -8,16 +8,11 @@ public class HelloController {
 
     @GetMapping("/")
     public String home() {
-        return "index";
-    }
-
-    @GetMapping("/admin/")
-    public String adminHome() {
-        return "index";
+        return "redirect:/products";
     }
 
     @GetMapping("/hello")
     public String helloPage() {
-        return "index";
+        return "redirect:/products";
     }
 }

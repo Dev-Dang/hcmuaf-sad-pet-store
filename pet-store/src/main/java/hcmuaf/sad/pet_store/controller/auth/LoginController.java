@@ -44,7 +44,7 @@ public class LoginController {
 
         // Redirect nếu user đã đăng nhập
         if (session.getAttribute("userCode") != null) {
-            return "redirect:/";
+            return "redirect:" + resolveDestination(null, roleOf(session));
         }
 
         // [2.1.2 / 3.1.2] Hiển thị form đăng nhập
@@ -101,16 +101,31 @@ public class LoginController {
     }
 
     private String resolveDestination(String redirect, UserRole role) {
-        if (redirect != null && !redirect.isBlank()) {
-            boolean isAdminPath = redirect.startsWith("/admin");
-            // AF1 — trang đích không phù hợp role
-            // [2.2.1 / 3.3.1] Đặt lại trang đích về mặc định theo role
-            if (isAdminPath != (role == UserRole.ADMIN)) {
-                return role == UserRole.ADMIN ? "/admin/" : "/";
+        if (role == UserRole.ADMIN) {
+            if (redirect != null && !redirect.isBlank()) {
+                boolean isAdminPath = redirect.startsWith("/admin");
+                // AF1 — trang đích không phù hợp role
+                // [2.2.1 / 3.3.1] Đặt lại trang đích về mặc định theo role
+                if (!isAdminPath) {
+                    return "/admin/";
+                }
+                return redirect;
             }
-            return redirect;
+            return "/admin/";
         }
-        return role == UserRole.ADMIN ? "/admin/" : "/";
+        return "/products";
+    }
+
+    private UserRole roleOf(HttpSession session) {
+        String role = (String) session.getAttribute("role");
+        if (role == null || role.isBlank()) {
+            return UserRole.CUSTOMER;
+        }
+        try {
+            return UserRole.valueOf(role);
+        } catch (IllegalArgumentException ex) {
+            return UserRole.CUSTOMER;
+        }
     }
 
     @GetMapping("/login/google/callback")

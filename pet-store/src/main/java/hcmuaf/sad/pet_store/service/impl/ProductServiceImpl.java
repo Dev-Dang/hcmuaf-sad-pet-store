@@ -4,7 +4,7 @@ import hcmuaf.sad.pet_store.dto.response.ProductResponse;
 import hcmuaf.sad.pet_store.dto.response.VariantResponse;
 import hcmuaf.sad.pet_store.entity.Product;
 import hcmuaf.sad.pet_store.entity.ProductVariant;
-import hcmuaf.sad.pet_store.exception.resource.ResourceNotFoundException;
+import hcmuaf.sad.pet_store.exception.ResourceNotFoundException;
 import hcmuaf.sad.pet_store.mapper.ProductMapper;
 import hcmuaf.sad.pet_store.repository.ProductRepository;
 import hcmuaf.sad.pet_store.service.ProductService;

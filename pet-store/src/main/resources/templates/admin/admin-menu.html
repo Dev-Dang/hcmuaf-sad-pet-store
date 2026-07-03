@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản trị</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header th:replace="~{fragments/navigation :: adminHeader('menu')}"></header>
+
+<main class="page stack">
+    <div class="actions">
+        <h1>Menu quản trị</h1>
+    </div>
+
+    <section class="panel stack">
+        <a class="button secondary" th:href="@{/admin/customers}">Quản lý khách hàng</a>
+        <a class="button secondary" th:href="@{/admin/orders}">Quản lý đơn hàng</a>
+        <a class="button secondary" th:href="@{/products}">Xem sản phẩm</a>
+    </section>
+</main>
+</body>
+</html>

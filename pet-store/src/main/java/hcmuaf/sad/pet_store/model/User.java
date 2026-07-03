@@ -140,9 +140,26 @@ public class User extends BaseEntity {
         return (safePage - 1) * size;
     }
 
-    public static User findActiveByUserId(String userId) {
-        // TODO: UC-2/3
-        throw new UnsupportedOperationException("TODO: UC-2/3");
+    public static User findActiveById(Long id) {
+        try {
+            List<User> results = DBUtils.jdbc().query(
+                    "SELECT * FROM users WHERE id = ? AND is_current = true AND is_deleted = false",
+                    ROW_MAPPER, id);
+            return results.isEmpty() ? null : results.get(0);
+        } catch (DataAccessException e) {
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
+        }
+    }
+
+    public static User findById(Long id) {
+        try {
+            List<User> results = DBUtils.jdbc().query(
+                    "SELECT * FROM users WHERE id = ?",
+                    ROW_MAPPER, id);
+            return results.isEmpty() ? null : results.get(0);
+        } catch (DataAccessException e) {
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
+        }
     }
 
     public void updateDisplayName(String name) {

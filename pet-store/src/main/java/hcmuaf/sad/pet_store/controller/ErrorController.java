@@ -12,4 +12,9 @@ public class ErrorController {
         model.addAttribute("errorMessage", "Có lỗi xảy ra. Vui lòng thử lại.");
         return "error/generic";
     }
+
+    @GetMapping("/error/403")
+    public String forbidden() {
+        return "error/403";
+    }
 }

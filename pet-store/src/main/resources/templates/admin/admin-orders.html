@@ -1,68 +1,46 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Đơn hàng (Admin) - Pet Store</title>
-    <link rel="stylesheet" href="/css/index.css">
-    <style>
-        .admin-layout { display: flex; min-height: 100vh; }
-        .sidebar { width: 250px; background: rgba(30,30,30,0.5); border-right: 1px solid rgba(255,255,255,0.1); padding: 2rem; }
-        .sidebar a { display: block; padding: 1rem; color: var(--text-secondary); text-decoration: none; border-radius: 8px; margin-bottom: 0.5rem; }
-        .sidebar a:hover, .sidebar a.active { background: rgba(255,255,255,0.1); color: var(--text-primary); }
-        .admin-content { flex: 1; padding: 2rem; }
-        .table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        .table th, .table td { padding: 1rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .table th { color: var(--text-secondary); font-weight: 500; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000; }
-        .modal.show { display: flex; }
-        .modal-content { background: var(--bg-card); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 800px; max-height: 90vh; overflow-y: auto; }
-        .close-btn { float: right; cursor: pointer; font-size: 1.5rem; color: var(--text-secondary); }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head>
 <body>
+<header th:replace="~{fragments/navigation :: adminHeader('orders')}"></header>
 
-<div class="admin-layout">
-    <div class="sidebar">
-        <h2>🛠 Admin</h2>
-        <div style="margin-top: 2rem;">
-            <a href="#" class="active">📦 Quản lý đơn hàng</a>
-            <a href="#">🛍 Quản lý sản phẩm</a>
-            <a href="/logout">🚪 Đăng xuất</a>
+<main class="admin-page stack">
+    <div class="actions">
+        <h1>Danh sách đơn hàng toàn hệ thống</h1>
+    </div>
+    <section class="panel">
+        <table class="table" id="orders-table">
+            <thead>
+                <tr>
+                    <th>Mã Đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Ngày đặt</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái ĐH</th>
+                    <th>Thanh toán</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="orders-body">
+                <tr><td colspan="7" style="text-align: center;">⏳ Đang tải...</td></tr>
+            </tbody>
+        </table>
+        <div class="pagination" id="pagination" style="margin-top: 2rem;"></div>
+    </section>
+    <div class="modal" id="detail-modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 style="margin-bottom: 1.5rem;" id="modal-title">Chi tiết đơn hàng</h2>
+            <div id="modal-body"></div>
         </div>
     </div>
-    <div class="admin-content">
-        <h1 class="section-title">Danh sách đơn hàng toàn hệ thống</h1>
-        <div class="product-detail-card" style="display: block; padding: 1rem;">
-            <table class="table" id="orders-table">
-                <thead>
-                    <tr>
-                        <th>Mã Đơn</th>
-                        <th>Khách hàng</th>
-                        <th>Ngày đặt</th>
-                        <th>Tổng tiền</th>
-                        <th>Trạng thái ĐH</th>
-                        <th>Thanh toán</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody id="orders-body">
-                    <tr><td colspan="7" style="text-align: center;">⏳ Đang tải...</td></tr>
-                </tbody>
-            </table>
-            <div class="pagination" id="pagination" style="margin-top: 2rem;"></div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Chi Tiết Đơn Hàng -->
-<div class="modal" id="detail-modal">
-    <div class="modal-content">
-        <span class="close-btn" onclick="closeModal()">&times;</span>
-        <h2 style="margin-bottom: 1.5rem;" id="modal-title">Chi tiết đơn hàng</h2>
-        <div id="modal-body"></div>
-    </div>
-</div>
+</main>
 
 <script>
     const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
@@ -95,7 +73,7 @@
 
         tbody.innerHTML = orders.map(o => `
             <tr>
-                <td>#${o.id}</td>
+                <td>#${o.orderCode}</td>
                 <td>
                     ${o.customerName}
                     <div style="font-size: 0.8rem; color: var(--text-secondary);">${o.customerEmail}</div>
@@ -144,7 +122,7 @@
             
             if (data.success) {
                 const o = data.data;
-                mtitle.textContent = `Chi tiết đơn hàng #${o.id}`;
+                mtitle.textContent = `Chi tiết đơn hàng #${o.orderCode}`;
                 
                 mbody.innerHTML = `
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">

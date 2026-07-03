@@ -50,6 +50,7 @@ public class CustomerMapper {
 
     private static CustomerOrderHistoryItemDto toOrderHistoryItemDto(Order order) {
         CustomerOrderHistoryItemDto dto = new CustomerOrderHistoryItemDto();
+        dto.setOrderId(order.getId());
         dto.setOrderCode(order.getOrderCode());
         dto.setCreatedAt(order.getCreatedAt());
         dto.setOrderStatus(order.getOrderStatus());

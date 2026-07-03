@@ -67,6 +67,11 @@ a:hover {
     flex-wrap: wrap;
 }
 
+.nav a.active {
+    font-weight: 700;
+    text-decoration: none;
+}
+
 .panel,
 .address-card,
 .form-panel,

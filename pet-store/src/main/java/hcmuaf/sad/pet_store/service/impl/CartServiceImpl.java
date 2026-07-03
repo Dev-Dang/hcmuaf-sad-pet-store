@@ -6,9 +6,8 @@ import hcmuaf.sad.pet_store.dto.response.CartItemResponse;
 import hcmuaf.sad.pet_store.dto.response.CartResponse;
 import hcmuaf.sad.pet_store.entity.CartItem;
 import hcmuaf.sad.pet_store.entity.ProductVariant;
-import hcmuaf.sad.pet_store.entity.User;
-import hcmuaf.sad.pet_store.exception.business.InsufficientStockException;
-import hcmuaf.sad.pet_store.exception.resource.ResourceNotFoundException;
+import hcmuaf.sad.pet_store.exception.InsufficientStockException;
+import hcmuaf.sad.pet_store.exception.ResourceNotFoundException;
 import hcmuaf.sad.pet_store.mapper.CartMapper;
 import hcmuaf.sad.pet_store.repository.CartItemRepository;
 import hcmuaf.sad.pet_store.repository.ProductVariantRepository;
@@ -17,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -31,17 +29,16 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
     private final ProductVariantRepository variantRepository;
     private final CartMapper cartMapper;
-    private final EntityManager entityManager;
 
     @Override
     @Transactional(readOnly = true)
-    public CartResponse getCart(Long userId) {
-        List<CartItem> items = cartItemRepository.findAllByUserIdAndDeletedAtIsNull(userId);
+    public CartResponse getCart(String userCode) {
+        List<CartItem> items = cartItemRepository.findAllByUserCodeAndDeletedAtIsNull(userCode);
         return buildCartResponse(items);
     }
 
     @Override
-    public CartResponse addToCart(Long userId, AddToCartRequest request) {
+    public CartResponse addToCart(String userCode, AddToCartRequest request) {
         ProductVariant variant = variantRepository.findByIdAndStatusAndDeletedAtIsNull(request.getVariantId(), ProductVariant.Status.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("ProductVariant", request.getVariantId()));
 
@@ -49,7 +46,7 @@ public class CartServiceImpl implements CartService {
             throw new ResourceNotFoundException("ProductVariant", request.getVariantId()); // Not sellable
         }
 
-        Optional<CartItem> existingItemOpt = cartItemRepository.findByUserIdAndVariantIdAndDeletedAtIsNull(userId, request.getVariantId());
+        Optional<CartItem> existingItemOpt = cartItemRepository.findByUserCodeAndVariantIdAndDeletedAtIsNull(userCode, request.getVariantId());
 
         CartItem cartItem;
         if (existingItemOpt.isPresent()) {
@@ -64,18 +61,18 @@ public class CartServiceImpl implements CartService {
                 throw new InsufficientStockException(variant.getName(), request.getQuantity(), variant.getAvailableStock());
             }
             cartItem = new CartItem();
-            cartItem.setUser(entityManager.getReference(User.class, userId));
+            cartItem.setUserCode(userCode);
             cartItem.setVariant(variant);
             cartItem.setQuantity(request.getQuantity());
         }
 
         cartItemRepository.save(cartItem);
-        return getCart(userId);
+        return getCart(userCode);
     }
 
     @Override
-    public CartResponse updateCartItem(Long userId, Long cartItemId, UpdateCartRequest request) {
-        CartItem cartItem = cartItemRepository.findByIdAndUserIdAndDeletedAtIsNull(cartItemId, userId)
+    public CartResponse updateCartItem(String userCode, Long cartItemId, UpdateCartRequest request) {
+        CartItem cartItem = cartItemRepository.findByIdAndUserCodeAndDeletedAtIsNull(cartItemId, userCode)
                 .orElseThrow(() -> new ResourceNotFoundException("CartItem", cartItemId));
 
         ProductVariant variant = cartItem.getVariant();
@@ -85,16 +82,16 @@ public class CartServiceImpl implements CartService {
 
         cartItem.setQuantity(request.getQuantity());
         cartItemRepository.save(cartItem);
-        return getCart(userId);
+        return getCart(userCode);
     }
 
     @Override
-    public CartResponse removeCartItem(Long userId, Long cartItemId) {
-        CartItem cartItem = cartItemRepository.findByIdAndUserIdAndDeletedAtIsNull(cartItemId, userId)
+    public CartResponse removeCartItem(String userCode, Long cartItemId) {
+        CartItem cartItem = cartItemRepository.findByIdAndUserCodeAndDeletedAtIsNull(cartItemId, userCode)
                 .orElseThrow(() -> new ResourceNotFoundException("CartItem", cartItemId));
         
         cartItemRepository.delete(cartItem);
-        return getCart(userId);
+        return getCart(userCode);
     }
 
     private CartResponse buildCartResponse(List<CartItem> items) {

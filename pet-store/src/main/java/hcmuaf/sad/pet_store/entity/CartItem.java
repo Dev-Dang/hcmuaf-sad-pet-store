@@ -12,10 +12,8 @@ import lombok.ToString;
 @Table(name = "cart_items")
 public class CartItem extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    @ToString.Exclude
-    private User user;
+    @Column(name = "user_code", nullable = false)
+    private String userCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "variant_id")

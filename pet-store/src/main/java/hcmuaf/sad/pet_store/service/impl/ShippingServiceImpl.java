@@ -1,6 +1,6 @@
 package hcmuaf.sad.pet_store.service.impl;
 
-import hcmuaf.sad.pet_store.client.GoogleMapsClient;
+import hcmuaf.sad.pet_store.client.GoongMapsClient;
 import hcmuaf.sad.pet_store.dto.request.ShippingFeeRequest;
 import hcmuaf.sad.pet_store.dto.response.ShippingFeeResponse;
 import hcmuaf.sad.pet_store.service.ShippingService;
@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class ShippingServiceImpl implements ShippingService {
 
-    private final GoogleMapsClient googleMapsClient;
+    private final GoongMapsClient goongMapsClient;
 
     @Value("${app.store.address:}")
     private String storeAddress;
@@ -28,20 +28,20 @@ public class ShippingServiceImpl implements ShippingService {
 
     @Override
     public ShippingFeeResponse calculateShippingFee(ShippingFeeRequest request) {
-        // EX.1: Check if store address is configured properly
+        // EX.1: Kiểm tra địa chỉ cửa hàng đã được cấu hình (BRULE-40)
         if (storeAddress == null || storeAddress.isBlank()) {
-            log.error("Store address is not configured. Cannot calculate shipping fee.");
+            log.error("[Shipping] Chưa cấu hình địa chỉ cửa hàng. Không thể tính phí giao hàng.");
             throw new IllegalStateException("Hệ thống chưa cấu hình địa chỉ cửa hàng. Không thể tính phí giao hàng.");
         }
 
-        String customerAddress = request.getFullAddress();
+        String customerAddress = request.getResolvedFullAddress();
 
-        // Call Google Maps API
-        Integer distanceMeters = googleMapsClient.getDistanceInMeters(storeAddress, customerAddress);
+        // Gọi Goong Maps Distance Matrix API
+        Integer distanceMeters = goongMapsClient.getDistanceInMeters(storeAddress, customerAddress);
 
-        // AC.1: Fallback if Google Maps fails (returns null)
+        // AC.1: Fallback nếu Goong Maps trả về null (lỗi, timeout, hết quota, không geocode được)
         if (distanceMeters == null) {
-            log.warn("Using fallback shipping fee (30,000) for address: {}", customerAddress);
+            log.warn("[Shipping] Dùng phí giao hàng mặc định (30,000đ) cho địa chỉ: {}", customerAddress);
             return ShippingFeeResponse.builder()
                     .fee(FALLBACK_FEE)
                     .distanceKm(null)
@@ -49,18 +49,18 @@ public class ShippingServiceImpl implements ShippingService {
                     .build();
         }
 
-        // Basic Flow: Calculate fee based on distance
-        // Distance is rounded up to the nearest km
+        // Basic Flow: Tính phí theo khoảng cách (BRULE-39, BR-07)
+        // Làm tròn lên theo km (BR-07 rule 5)
         int distanceKm = (int) Math.ceil(distanceMeters / 1000.0);
-        
+
         BigDecimal finalFee = BASE_FEE;
         if (distanceKm > BASE_DISTANCE_KM) {
             int extraKm = distanceKm - BASE_DISTANCE_KM;
             finalFee = BASE_FEE.add(EXTRA_FEE_PER_KM.multiply(new BigDecimal(extraKm)));
         }
 
-        log.info("Calculated fee for {} km: {}", distanceKm, finalFee);
-        
+        log.info("[Shipping] Khoảng cách {} km → Phí giao hàng: {}đ", distanceKm, finalFee);
+
         return ShippingFeeResponse.builder()
                 .fee(finalFee)
                 .distanceKm(distanceKm)

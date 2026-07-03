@@ -6,26 +6,22 @@ import lombok.Data;
 @Data
 public class ShippingFeeRequest {
     
-    @NotBlank(message = "Họ tên người nhận không được để trống")
     private String fullName;
     
-    @NotBlank(message = "Số điện thoại không được để trống")
     private String phone;
     
-    @NotBlank(message = "Địa chỉ chi tiết không được để trống")
     private String addressDetail;
-    
-    @NotBlank(message = "Phường/Xã không được để trống")
     private String ward;
-    
-    @NotBlank(message = "Quận/Huyện không được để trống")
     private String district;
-    
-    @NotBlank(message = "Tỉnh/Thành phố không được để trống")
     private String city;
+    
+    private String fullAddress;
 
-    // Helper method to format full address for Google Maps API
-    public String getFullAddress() {
+    // Ghép địa chỉ đầy đủ để gửi tới Goong Maps Geocode API
+    public String getResolvedFullAddress() {
+        if (fullAddress != null && !fullAddress.isBlank()) {
+            return fullAddress;
+        }
         return String.format("%s, %s, %s, %s", addressDetail, ward, district, city);
     }
 }

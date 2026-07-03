@@ -32,6 +32,10 @@ public class CartController {
         String userCode = user.getUserCode();
         CartResponse cart = cartService.getCart(userCode);
         model.addAttribute("cart", cart);
+
+        // Fetch user's saved addresses to show in the cart
+        var addresses = hcmuaf.sad.pet_store.model.ShippingAddress.findAllByUserCode(userCode);
+        model.addAttribute("addresses", hcmuaf.sad.pet_store.mapper.AddressMapper.toDtoList(addresses));
         return "cart/cart";
     }
 

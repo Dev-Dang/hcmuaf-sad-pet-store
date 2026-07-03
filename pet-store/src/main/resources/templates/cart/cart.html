@@ -8,6 +8,58 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/app.css}">
     <link rel="stylesheet" th:href="@{/css/customer.css}">
+    <style>
+        /* ─── Shipping Form ─────────────────────────────────────── */
+        .shipping-form {
+            margin-top: 16px;
+            border-top: 1px solid var(--border, #e5e7eb);
+            padding-top: 14px;
+        }
+        .shipping-form-title {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-secondary, #6b7280);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-bottom: 10px;
+        }
+        .shipping-form input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border, #d1d5db);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+            box-sizing: border-box;
+            background: var(--bg-input, #f9fafb);
+            transition: border-color .2s;
+        }
+        .shipping-form input:focus { outline: none; border-color: #6366f1; }
+        .shipping-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-calc-ship {
+            width: 100%;
+            padding: 9px;
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .2s;
+        }
+        .btn-calc-ship:hover { background: #4f46e5; }
+        .btn-calc-ship:disabled { background: #a5b4fc; cursor: not-allowed; }
+        .shipping-note {
+            font-size: 0.76rem;
+            color: #6b7280;
+            margin-top: 6px;
+            text-align: center;
+        }
+        #ship-fee-display { font-weight: 600; }
+        #ship-fee-display.fallback { color: #f59e0b; }
+        #ship-fee-display.calculated { color: #16a34a; }
+    </style>
 </head>
 <body>
 
@@ -37,19 +89,52 @@
         <!-- Summary Panel -->
         <div class="summary-card" id="summary-card">
             <div class="summary-title">Tóm tắt đơn hàng</div>
+
             <div class="summary-row">
                 <span>Tạm tính</span>
                 <span id="subtotal">0 ₫</span>
             </div>
             <div class="summary-row">
                 <span>Phí giao hàng</span>
-                <span style="color:#16a34a; font-weight:600;">Miễn phí (thử nghiệm)</span>
+                <span id="ship-fee-display" style="color:#6b7280;">—</span>
             </div>
             <hr class="summary-divider">
             <div class="summary-total">
                 <span>Tổng cộng</span>
                 <span class="price" id="total">0 ₫</span>
             </div>
+
+            <!-- ─── Shipping address form ─── -->
+            <div class="shipping-form" id="shipping-form" style="display:none;">
+                <div class="shipping-form-title">📍 Địa chỉ giao hàng</div>
+
+                <div th:if="${!#lists.isEmpty(addresses)}">
+                    <select id="saved-address-select" onchange="toggleAddressForm()" style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--border, #d1d5db); background: var(--bg-input, #f9fafb);">
+                        <option th:each="addr : ${addresses}" 
+                                th:value="${addr.fullAddress}" 
+                                th:text="${addr.recipientName + ' - ' + addr.phone + ' - ' + addr.fullAddress}"
+                                th:selected="${addr.isDefault}"></option>
+                        <option value="NEW">-- Nhập địa chỉ mới --</option>
+                    </select>
+                </div>
+
+                <div id="manual-address-form" th:style="${!#lists.isEmpty(addresses)} ? 'display:none;' : 'display:block;'">
+                    <input type="text" id="ship-full-name"  placeholder="Họ tên người nhận *">
+                    <input type="tel"  id="ship-phone"      placeholder="Số điện thoại (0xxxxxxxxx) *">
+                    <input type="text" id="ship-address"    placeholder="Số nhà, tên đường *">
+                    <div class="shipping-row">
+                        <input type="text" id="ship-ward"     placeholder="Phường / Xã *">
+                        <input type="text" id="ship-district" placeholder="Quận / Huyện *">
+                    </div>
+                    <input type="text" id="ship-city" placeholder="Tỉnh / Thành phố *">
+                </div>
+
+                <button class="btn-calc-ship" id="btn-calc-ship" onclick="calculateShipping()">
+                    🗺 Tính phí giao hàng
+                </button>
+                <p class="shipping-note" id="ship-note"></p>
+            </div>
+
             <button class="btn-checkout" id="btn-checkout" disabled>
                 Tiến hành thanh toán →
             </button>
@@ -64,25 +149,35 @@
 <script>
     const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
+    let subtotalValue = 0;
+    let shippingFee = null;
+
     async function fetchCart() {
-        const res = await fetch('/api/v1/cart');
-        const data = await res.json();
-        if (data.success) renderCart(data.data);
+        try {
+            const res = await fetch('/api/v1/cart');
+            const data = await res.json();
+            if (data.success) renderCart(data.data);
+        } catch (e) {
+            showToast('❌ Không thể tải giỏ hàng', 'error');
+        }
     }
 
     function renderCart(cart) {
         const items = cart.items || [];
-        const subtotal = cart.totalCartPrice || 0;
+        subtotalValue = cart.totalCartPrice || 0;
+
         const body = document.getElementById('cart-body');
         const countEl = document.getElementById('item-count-text');
         const checkoutBtn = document.getElementById('btn-checkout');
+        const shippingForm = document.getElementById('shipping-form');
 
-        document.getElementById('subtotal').textContent = fmt(subtotal);
-        document.getElementById('total').textContent = fmt(subtotal);
+        document.getElementById('subtotal').textContent = fmt(subtotalValue);
+        updateTotal();
 
         if (items.length === 0) {
             countEl.textContent = 'Giỏ hàng trống';
             checkoutBtn.disabled = true;
+            shippingForm.style.display = 'none';
             body.innerHTML = `
                 <div class="cart-empty">
                     <div class="empty-icon">🛒</div>
@@ -93,7 +188,7 @@
         }
 
         countEl.textContent = `${items.length} sản phẩm trong giỏ`;
-        checkoutBtn.disabled = false;
+        shippingForm.style.display = 'block';
 
         const icons = ['🐶','🐱','🐠','🐹','🦜','🐰','🦴','🐾'];
         body.innerHTML = items.map((item, i) => `
@@ -113,6 +208,90 @@
                 <button class="btn-remove" onclick="removeItem(${item.id})" title="Xóa">🗑</button>
             </div>`
         ).join('');
+    }
+
+    function updateTotal() {
+        const total = subtotalValue + (shippingFee !== null ? shippingFee : 0);
+        document.getElementById('total').textContent = fmt(total);
+
+        const checkoutBtn = document.getElementById('btn-checkout');
+        // Chỉ cho phép checkout khi đã tính phí ship
+        checkoutBtn.disabled = (shippingFee === null);
+    }
+
+    function toggleAddressForm() {
+        const select = document.getElementById('saved-address-select');
+        const manualForm = document.getElementById('manual-address-form');
+        if (select && select.value === 'NEW') {
+            manualForm.style.display = 'block';
+        } else if (select) {
+            manualForm.style.display = 'none';
+        }
+    }
+
+    async function calculateShipping() {
+        const select = document.getElementById('saved-address-select');
+        let requestBody = {};
+
+        if (select && select.value !== 'NEW') {
+            requestBody = { fullAddress: select.value };
+        } else {
+            const fullName   = document.getElementById('ship-full-name').value.trim();
+            const phone      = document.getElementById('ship-phone').value.trim();
+            const address    = document.getElementById('ship-address').value.trim();
+            const ward       = document.getElementById('ship-ward').value.trim();
+            const district   = document.getElementById('ship-district').value.trim();
+            const city       = document.getElementById('ship-city').value.trim();
+
+            if (!fullName || !phone || !address || !ward || !district || !city) {
+                showToast('⚠️ Vui lòng điền đầy đủ thông tin địa chỉ', 'error');
+                return;
+            }
+            requestBody = { fullName, phone, addressDetail: address, ward, district, city };
+        }
+
+        const btn = document.getElementById('btn-calc-ship');
+        const noteEl = document.getElementById('ship-note');
+        btn.disabled = true;
+        btn.textContent = '⏳ Đang tính...';
+        noteEl.textContent = '';
+
+        try {
+            const res = await fetch('/api/v1/shipping/calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                const result = data.data;
+                shippingFee = result.fee;
+
+                const feeEl = document.getElementById('ship-fee-display');
+                if (result.fallback) {
+                    feeEl.className = 'fallback';
+                    feeEl.textContent = fmt(shippingFee) + ' (mặc định)';
+                    noteEl.textContent = '⚠️ Không thể tính khoảng cách chính xác, áp dụng phí mặc định.';
+                } else {
+                    feeEl.className = 'calculated';
+                    feeEl.textContent = fmt(shippingFee) + ` (~${result.distanceKm} km)`;
+                    noteEl.textContent = '';
+                }
+
+                updateTotal();
+                showToast('✅ Đã tính phí giao hàng', 'success');
+                btn.textContent = '🔄 Tính lại phí';
+            } else {
+                showToast('❌ ' + (data.message || 'Không thể tính phí'), 'error');
+                btn.textContent = '🗺 Tính phí giao hàng';
+            }
+        } catch (e) {
+            showToast('❌ Lỗi kết nối', 'error');
+            btn.textContent = '🗺 Tính phí giao hàng';
+        }
+
+        btn.disabled = false;
     }
 
     async function updateQty(cartItemId, newQty) {
@@ -144,6 +323,11 @@
             const res = await fetch(`/api/v1/cart/items/${cartItemId}`, { method: 'DELETE' });
             const data = await res.json();
             if (data.success) {
+                // Reset ship fee khi thay đổi giỏ hàng
+                shippingFee = null;
+                document.getElementById('ship-fee-display').textContent = '—';
+                document.getElementById('ship-fee-display').className = '';
+                document.getElementById('ship-note').textContent = '';
                 renderCart(data.data);
                 showToast('🗑 Đã xóa sản phẩm', 'success');
             } else {

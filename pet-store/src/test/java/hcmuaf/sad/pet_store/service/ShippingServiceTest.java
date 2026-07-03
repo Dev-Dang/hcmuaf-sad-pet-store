@@ -3,7 +3,7 @@ package hcmuaf.sad.pet_store.service;
 import hcmuaf.sad.pet_store.dto.request.ShippingFeeRequest;
 import hcmuaf.sad.pet_store.dto.response.ShippingFeeResponse;
 import hcmuaf.sad.pet_store.service.impl.ShippingServiceImpl;
-import hcmuaf.sad.pet_store.client.GoogleMapsClient;
+import hcmuaf.sad.pet_store.client.GoongMapsClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 class ShippingServiceTest {
 
     @Mock
-    private GoogleMapsClient googleMapsClient;
+    private GoongMapsClient goongMapsClient;
 
     @InjectMocks
     private ShippingServiceImpl shippingService;
@@ -33,7 +33,7 @@ class ShippingServiceTest {
 
     @Test
     void testFallbackFeeWhenApiReturnsNull() {
-        when(googleMapsClient.getDistanceInMeters(anyString(), anyString())).thenReturn(null);
+        when(goongMapsClient.getDistanceInMeters(anyString(), anyString())).thenReturn(null);
 
         ShippingFeeRequest req = new ShippingFeeRequest();
         req.setAddressDetail("123");
@@ -50,7 +50,7 @@ class ShippingServiceTest {
 
     @Test
     void testCalculateFeeLessThan3Km() {
-        when(googleMapsClient.getDistanceInMeters(anyString(), anyString())).thenReturn(2500); // 2.5km -> 3km
+        when(goongMapsClient.getDistanceInMeters(anyString(), anyString())).thenReturn(2500); // 2.5km -> 3km
 
         ShippingFeeRequest req = new ShippingFeeRequest();
         req.setAddressDetail("123"); req.setWard("Ward"); req.setDistrict("Dist"); req.setCity("City");
@@ -66,7 +66,7 @@ class ShippingServiceTest {
     void testCalculateFeeMoreThan3Km() {
         // 4.1km -> ceil to 5km
         // Base: 22000 for 3km. Extra: 2km * 4000 = 8000. Total = 30000
-        when(googleMapsClient.getDistanceInMeters(anyString(), anyString())).thenReturn(4100);
+        when(goongMapsClient.getDistanceInMeters(anyString(), anyString())).thenReturn(4100);
 
         ShippingFeeRequest req = new ShippingFeeRequest();
         req.setAddressDetail("123"); req.setWard("Ward"); req.setDistrict("Dist"); req.setCity("City");

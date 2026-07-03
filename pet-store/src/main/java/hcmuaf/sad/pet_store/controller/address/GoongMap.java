@@ -23,7 +23,7 @@ public class GoongMap {
         }
 
         // Gọi Goong lấy gợi ý địa chỉ.
-        JsonNode root = getJson(uri("/Place/AutoComplete")
+        JsonNode root = getJson(uri("/v2/place/autocomplete")
                 .queryParam("input", keyword)
                 .build()
                 .toUri());
@@ -45,7 +45,7 @@ public class GoongMap {
         }
 
         // Lấy địa chỉ chuẩn và tọa độ từ placeId.
-        JsonNode result = getJson(uri("/Place/Detail")
+        JsonNode result = getJson(uri("/place/detail")
                 .queryParam("place_id", placeId)
                 .build()
                 .toUri()).path("result");
@@ -62,7 +62,7 @@ public class GoongMap {
         }
 
         // Đổi tọa độ thành địa chỉ gần nhất.
-        JsonNode results = getJson(uri("/Geocode")
+        JsonNode results = getJson(uri("/v2/geocode")
                 .queryParam("latlng", latitude + "," + longitude)
                 .build()
                 .toUri()).path("results");
@@ -71,7 +71,8 @@ public class GoongMap {
     }
 
     private UriComponentsBuilder uri(String path) {
-        return UriComponentsBuilder.fromUriString(baseUrl() + apiPrefix() + path)
+        // baseUrl = https://rsapi.goong.io, path đã bao gồm version prefix (/v2/...)
+        return UriComponentsBuilder.fromUriString(baseUrl() + path)
                 .queryParam("api_key", apiKey());
     }
 

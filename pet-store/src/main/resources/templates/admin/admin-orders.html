@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Đơn hàng (Admin) - Pet Store</title>
+    <link rel="stylesheet" href="/css/index.css">
+    <style>
+        .admin-layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: rgba(30,30,30,0.5); border-right: 1px solid rgba(255,255,255,0.1); padding: 2rem; }
+        .sidebar a { display: block; padding: 1rem; color: var(--text-secondary); text-decoration: none; border-radius: 8px; margin-bottom: 0.5rem; }
+        .sidebar a:hover, .sidebar a.active { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+        .admin-content { flex: 1; padding: 2rem; }
+        .table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .table th, .table td { padding: 1rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .table th { color: var(--text-secondary); font-weight: 500; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000; }
+        .modal.show { display: flex; }
+        .modal-content { background: var(--bg-card); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 800px; max-height: 90vh; overflow-y: auto; }
+        .close-btn { float: right; cursor: pointer; font-size: 1.5rem; color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+
+<div class="admin-layout">
+    <div class="sidebar">
+        <h2>🛠 Admin</h2>
+        <div style="margin-top: 2rem;">
+            <a href="#" class="active">📦 Quản lý đơn hàng</a>
+            <a href="#">🛍 Quản lý sản phẩm</a>
+            <a href="/logout">🚪 Đăng xuất</a>
+        </div>
+    </div>
+    <div class="admin-content">
+        <h1 class="section-title">Danh sách đơn hàng toàn hệ thống</h1>
+        <div class="product-detail-card" style="display: block; padding: 1rem;">
+            <table class="table" id="orders-table">
+                <thead>
+                    <tr>
+                        <th>Mã Đơn</th>
+                        <th>Khách hàng</th>
+                        <th>Ngày đặt</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái ĐH</th>
+                        <th>Thanh toán</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="orders-body">
+                    <tr><td colspan="7" style="text-align: center;">⏳ Đang tải...</td></tr>
+                </tbody>
+            </table>
+            <div class="pagination" id="pagination" style="margin-top: 2rem;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Chi Tiết Đơn Hàng -->
+<div class="modal" id="detail-modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h2 style="margin-bottom: 1.5rem;" id="modal-title">Chi tiết đơn hàng</h2>
+        <div id="modal-body"></div>
+    </div>
+</div>
+
+<script>
+    const fmt = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
+    let currentPage = 0;
+
+    async function loadOrders() {
+        const tbody = document.getElementById('orders-body');
+        try {
+            const res = await fetch(`/api/v1/admin/orders?page=${currentPage}&size=10`);
+            const data = await res.json();
+            if (data.success) {
+                renderOrders(data.data);
+            } else {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center;">❌ Lỗi: ${data.message}</td></tr>`;
+            }
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center;">❌ Không thể tải dữ liệu</td></tr>`;
+        }
+    }
+
+    function renderOrders(page) {
+        const tbody = document.getElementById('orders-body');
+        const orders = page.content || [];
+
+        if (orders.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center;">Chưa có đơn hàng nào trong hệ thống.</td></tr>`;
+            document.getElementById('pagination').innerHTML = '';
+            return;
+        }
+
+        tbody.innerHTML = orders.map(o => `
+            <tr>
+                <td>#${o.id}</td>
+                <td>
+                    ${o.customerName}
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">${o.customerEmail}</div>
+                </td>
+                <td>${new Date(o.createdAt).toLocaleString()}</td>
+                <td style="color: var(--primary-color); font-weight: 600;">${fmt(o.totalAmount)}</td>
+                <td><span class="v-stock">${o.orderStatusLabel}</span></td>
+                <td><span class="out-of-stock-badge" style="background: transparent; color: inherit; border: 1px solid var(--border-color);">${o.paymentStatusLabel}</span></td>
+                <td>
+                    <button class="btn-add-cart" style="padding: 0.5rem 1rem; width: auto;" onclick="viewDetail(${o.id})">Xem</button>
+                </td>
+            </tr>
+        `).join('');
+
+        renderPagination(page);
+    }
+
+    function renderPagination(page) {
+        const el = document.getElementById('pagination');
+        const total = page.totalPages || 1;
+        if (total <= 1) { el.innerHTML = ''; return; }
+        let html = `<button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 0 ? 'disabled' : ''}>‹</button>`;
+        for (let i = 0; i < total; i++) {
+            html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i + 1}</button>`;
+        }
+        html += `<button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage >= total - 1 ? 'disabled' : ''}>›</button>`;
+        el.innerHTML = html;
+    }
+
+    function changePage(p) {
+        currentPage = p;
+        loadOrders();
+    }
+
+    async function viewDetail(id) {
+        const modal = document.getElementById('detail-modal');
+        const mbody = document.getElementById('modal-body');
+        const mtitle = document.getElementById('modal-title');
+        
+        mbody.innerHTML = '⏳ Đang tải...';
+        modal.classList.add('show');
+        
+        try {
+            const res = await fetch(`/api/v1/admin/orders/${id}`);
+            const data = await res.json();
+            
+            if (data.success) {
+                const o = data.data;
+                mtitle.textContent = `Chi tiết đơn hàng #${o.id}`;
+                
+                mbody.innerHTML = `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <h3 class="section-title" style="font-size: 1.1rem;">Thông tin khách hàng</h3>
+                            <p><strong>Tài khoản:</strong> ${o.customerName} (${o.customerEmail})</p>
+                            <p><strong>Người nhận:</strong> ${o.recipientName}</p>
+                            <p><strong>Điện thoại:</strong> ${o.recipientPhone}</p>
+                            <p><strong>Địa chỉ:</strong> ${o.deliveryAddress}</p>
+                            <p><strong>Ghi chú:</strong> ${o.note || 'Không có'}</p>
+                        </div>
+                        <div>
+                            <h3 class="section-title" style="font-size: 1.1rem;">Thông tin thanh toán</h3>
+                            <p><strong>Trạng thái ĐH:</strong> <span class="v-stock">${o.orderStatusLabel}</span></p>
+                            <p><strong>Thanh toán:</strong> <span style="color: var(--primary-color)">${o.paymentStatusLabel}</span></p>
+                            <p><strong>Phương thức:</strong> ${o.paymentMethod}</p>
+                            <p><strong>Tạm tính:</strong> ${fmt(o.subtotal)}</p>
+                            <p><strong>Phí ship:</strong> ${fmt(o.shippingFee)}</p>
+                            <p style="font-size: 1.2rem; margin-top: 0.5rem;"><strong>Tổng cộng: <span style="color: var(--primary-color)">${fmt(o.totalAmount)}</span></strong></p>
+                        </div>
+                    </div>
+                    
+                    <h3 class="section-title" style="font-size: 1.1rem;">Danh sách sản phẩm</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th>Phân loại</th>
+                                <th>Đơn giá</th>
+                                <th>SL</th>
+                                <th>Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${o.items.map(i => `
+                                <tr>
+                                    <td>${i.productName}</td>
+                                    <td>${i.variantName || 'Mặc định'}</td>
+                                    <td>${fmt(i.unitPrice)}</td>
+                                    <td>${i.quantity}</td>
+                                    <td style="color: var(--primary-color); font-weight: 600;">${fmt(i.subtotal)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                mbody.innerHTML = `❌ ${data.message}`;
+            }
+        } catch (e) {
+            mbody.innerHTML = `❌ Lỗi tải chi tiết đơn hàng`;
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('detail-modal').classList.remove('show');
+    }
+
+    loadOrders();
+</script>
+</body>
+</html>

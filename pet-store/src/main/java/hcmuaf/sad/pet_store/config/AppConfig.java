@@ -11,6 +11,14 @@ import org.springframework.transaction.PlatformTransactionManager;
 public class AppConfig {
 
     @Bean
+    public RestTemplate restTemplate() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(5000);
+        factory.setReadTimeout(5000);
+        return new RestTemplate(factory);
+    }
+
+    @Bean
     public DBUtils dbUtils(JdbcTemplate jdbcTemplate, PlatformTransactionManager transactionManager) {
         return new DBUtils(jdbcTemplate, transactionManager);
     }

@@ -16,10 +16,13 @@ public class RoleInterceptor implements HandlerInterceptor {
         String role = (session != null) ? (String) session.getAttribute("role") : null;
         String path = request.getRequestURI();
 
-        if (path.startsWith("/account/")) {
-            // [8.12.1-8.12.2] Redirect khi phiên đăng nhập Customer hết hạn
-            if (userCode == null || !"CUSTOMER".equals(role)) {
+        if ("/account".equals(path) || path.startsWith("/account/")) {
+            if (userCode == null || role == null) {
                 response.sendRedirect("/auth/login?expired=true");
+                return false;
+            }
+            if (!"CUSTOMER".equals(role)) {
+                response.sendRedirect("/admin/");
                 return false;
             }
             return true;

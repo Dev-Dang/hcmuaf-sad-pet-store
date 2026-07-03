@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/app.css}">
-    <link rel="stylesheet" th:href="@{/css/customer.css}">
+    <link rel="stylesheet" th:href="@{/css/customer.css(v=20260703)}">
 </head>
 <body>
 <header th:replace="~{fragments/navigation :: customerHeader('orders')}"></header>
@@ -51,7 +51,7 @@
         }
 
         container.innerHTML = orders.map(o => `
-            <div class="product-detail-card" style="margin-bottom: 1.5rem;">
+            <div class="order-detail-card" style="margin-bottom: 1.5rem;">
                 <div style="display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid #edf0f4; padding-bottom: 1rem; margin-bottom: 1rem;">
                     <div>
                         <div style="color: #6b7280; font-size: 0.9rem;">Ngày đặt: ${new Date(o.createdAt).toLocaleString()}</div>

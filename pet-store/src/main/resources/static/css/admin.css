@@ -4,6 +4,12 @@
 
 .admin-page {
     width: min(1200px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 24px 0 48px;
+}
+
+.admin-page .panel {
+    overflow-x: auto;
 }
 
 .table {

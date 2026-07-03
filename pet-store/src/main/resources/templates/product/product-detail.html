@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/app.css}">
-    <link rel="stylesheet" th:href="@{/css/customer.css}">
+    <link rel="stylesheet" th:href="@{/css/customer.css(v=20260703)}">
 </head>
 <body>
 
@@ -28,6 +28,7 @@
 
     let currentProduct = null;
     let selectedVariantId = null;
+    let selectedVariant = null;
 
     async function loadProductDetail() {
         if (!productId) return;
@@ -50,16 +51,20 @@
     function renderProduct() {
         const p = currentProduct;
         const variants = p.variants || [];
+        const lowestPrice = variants.length > 0 ? Math.min(...variants.map(v => v.price)) : 0;
         
         let variantsHtml = '';
         if (variants.length === 0) {
-            variantsHtml = `<div style="color:#9ca3af; font-style:italic">Hiện không có phân loại nào được bán.</div>`;
+            variantsHtml = `<div class="empty-variant">Hiện không có phân loại nào được bán.</div>`;
         } else {
             variantsHtml = variants.map(v => {
                 const isOutOfStock = v.availableStock <= 0;
                 return `
                 <div class="variant-card ${isOutOfStock ? 'disabled' : ''}" 
-                     id="var-${v.id}" 
+                     id="var-${v.id}"
+                     data-price="${v.price}"
+                     data-stock="${v.availableStock}"
+                     data-name="${v.name || 'Mặc định'}"
                      onclick="${!isOutOfStock ? `selectVariant(${v.id})` : ''}">
                     <div class="variant-info-left">
                         <span class="v-name">${v.name || 'Mặc định'}</span>
@@ -78,24 +83,54 @@
                 <a href="/products">Sản phẩm</a> / <span>${p.name}</span>
             </div>
             <div class="product-detail-card">
-                <div class="product-image-container">
-                    ${icons[p.id % icons.length]}
+                <div class="product-image-panel">
+                    <div class="product-media-badge">Xem chi tiết</div>
+                    <div class="product-image-container">
+                        <span class="product-icon">${icons[p.id % icons.length]}</span>
+                    </div>
+                    <div class="product-media-summary">
+                        <div class="product-media-summary-row">
+                            <span>Danh mục</span>
+                            <strong>${p.categoryName || 'Sản phẩm thú cưng'}</strong>
+                        </div>
+                        <div class="product-media-summary-row">
+                            <span>Phân loại</span>
+                            <strong>${variants.length}</strong>
+                        </div>
+                    </div>
                 </div>
                 <div class="product-info">
-                    <span class="product-category">${p.categoryName || 'Sản phẩm thú cưng'}</span>
-                    <h1 class="product-title">${p.name}</h1>
-                    <p class="product-desc">${p.description}</p>
-                    
-                    <div class="section-title">Chọn phân loại:</div>
-                    <div class="variant-grid">
-                        ${variantsHtml}
+                    <div class="product-hero-head">
+                        <span class="product-category">${p.categoryName || 'Sản phẩm thú cưng'}</span>
+                        <h1 class="product-title">${p.name}</h1>
+                        <div class="product-price-row">
+                            <span class="product-price-label">Giá</span>
+                            <span class="product-price-value" id="selected-price">${lowestPrice > 0 ? `Từ ${fmt(lowestPrice)}` : 'Chưa có giá'}</span>
+                        </div>
+                        <p class="product-desc">${p.description || 'Chưa có mô tả sản phẩm.'}</p>
                     </div>
 
-                    <div class="add-to-cart-bar">
-                        <input type="number" id="qty-input" class="qty-input" value="1" min="1" ${variants.length===0 ? 'disabled':''}>
-                        <button class="btn-add-cart" id="btn-add-cart" onclick="addToCart()" disabled>
-                            Chọn phân loại
-                        </button>
+                    <div class="product-section-card">
+                        <div class="section-title">Chọn phân loại</div>
+                        <div class="variant-grid">
+                            ${variantsHtml}
+                        </div>
+                    </div>
+
+                    <div class="product-section-card">
+                        <div class="purchase-grid">
+                            <div class="purchase-qty">
+                                <div class="section-title">Số lượng</div>
+                                <input type="number" id="qty-input" class="qty-input" value="1" min="1" ${variants.length===0 ? 'disabled':''}>
+                            </div>
+                            <div class="purchase-action">
+                                <div class="section-title">Trạng thái</div>
+                                <div class="purchase-status" id="selected-stock">Vui lòng chọn phân loại</div>
+                                <button class="btn-add-cart" id="btn-add-cart" onclick="addToCart()" disabled>
+                                    Chọn phân loại
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -110,6 +145,7 @@
             const btn = document.getElementById('btn-add-cart');
             btn.textContent = 'Hết hàng';
             btn.disabled = true;
+            document.getElementById('selected-stock').textContent = 'Hết hàng';
         }
         
         updateCartCount();
@@ -117,12 +153,17 @@
 
     function selectVariant(id) {
         selectedVariantId = id;
+        selectedVariant = currentProduct.variants.find(v => v.id === id) || null;
         document.querySelectorAll('.variant-card').forEach(c => c.classList.remove('active'));
         document.getElementById('var-' + id).classList.add('active');
         
         const btn = document.getElementById('btn-add-cart');
         btn.disabled = false;
         btn.textContent = '🛒 Thêm vào giỏ hàng';
+        if (selectedVariant) {
+            document.getElementById('selected-price').textContent = fmt(selectedVariant.price);
+            document.getElementById('selected-stock').textContent = `Còn ${selectedVariant.availableStock} sản phẩm`;
+        }
     }
 
     async function addToCart() {
@@ -183,6 +224,6 @@
     }
 
     loadProductDetail();
-</script>
+    </script>
 </body>
 </html>

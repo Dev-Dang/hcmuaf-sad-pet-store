@@ -7,48 +7,50 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/app.css}">
-    <link rel="stylesheet" th:href="@{/css/customer.css}">
+    <link rel="stylesheet" th:href="@{/css/customer.css(v=20260703)}">
 </head>
 <body>
 
 <header th:replace="~{fragments/navigation :: customerHeader('products')}"></header>
 
 <!-- ── Page ── -->
-<div class="page-container">
+<div class="page-container products-page">
     <div class="page-header">
         <h1 class="page-title">🐾 Sản phẩm</h1>
         <p class="page-subtitle">Khám phá các sản phẩm tuyệt vời cho thú cưng của bạn</p>
     </div>
 
-    <!-- Sidebar Categories -->
-    <aside class="sidebar">
-        <h3 class="sidebar-title">Danh mục</h3>
-        <ul class="category-list" id="category-list">
-            <li class="category-item active" onclick="selectCategory(null)">Tất cả sản phẩm</li>
-            <!-- Rendered by JS -->
-        </ul>
-    </aside>
+    <div class="catalog-layout">
+        <!-- Sidebar Categories -->
+        <aside class="catalog-sidebar sidebar">
+            <h3 class="sidebar-title">Danh mục</h3>
+            <ul class="category-list" id="category-list">
+                <li class="category-item active" onclick="selectCategory(null)">Tất cả sản phẩm</li>
+                <!-- Rendered by JS -->
+            </ul>
+        </aside>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Search -->
-        <div class="search-bar">
-            <input type="text" id="search-input" class="search-input"
-                   placeholder="Tìm kiếm theo tên sản phẩm..." onkeydown="if(event.key==='Enter') doSearch()">
-            <button class="btn-search" onclick="doSearch()">🔍 Tìm kiếm</button>
-        </div>
-
-        <!-- Products Grid -->
-        <div class="products-grid" id="products-grid">
-            <div class="state-box">
-                <div class="icon">⏳</div>
-                <p>Đang tải sản phẩm...</p>
+        <!-- Main Content -->
+        <main class="catalog-main">
+            <!-- Search -->
+            <div class="search-bar catalog-search">
+                <input type="text" id="search-input" class="search-input"
+                       placeholder="Tìm kiếm theo tên sản phẩm..." onkeydown="if(event.key==='Enter') doSearch()">
+                <button class="btn-search" onclick="doSearch()">🔍 Tìm kiếm</button>
             </div>
-        </div>
 
-        <!-- Pagination -->
-        <div class="pagination" id="pagination"></div>
-    </main>
+            <!-- Products Grid -->
+            <div class="products-grid" id="products-grid">
+                <div class="state-box products-state">
+                    <div class="icon">⏳</div>
+                    <p>Đang tải sản phẩm...</p>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination pagination--catalog" id="pagination"></div>
+        </main>
+    </div>
 </div>
 
 <!-- Toast -->
@@ -118,7 +120,7 @@
 
         if (products.length === 0) {
             grid.innerHTML = '<div class="state-box"><div class="icon">🔍</div><p>Không tìm thấy sản phẩm nào</p></div>';
-            document.getElementById('pagination').innerHTML = '';
+            renderPagination(page, currentPageNum);
             return;
         }
 
@@ -149,13 +151,20 @@
 
     function renderPagination(page, current) {
         const el = document.getElementById('pagination');
-        const total = page.totalPages || 1;
-        if (total <= 1) { el.innerHTML = ''; return; }
-        let html = `<button class="page-btn" onclick="changePage(${current - 1})" ${current === 0 ? 'disabled' : ''}>‹</button>`;
+        const total = Math.max(page.totalPages || 0, 1);
+        const currentPageDisplay = Math.min(current + 1, total);
+        let html = `
+            <div class="pagination-shell">
+                <button class="page-btn" onclick="changePage(${current - 1})" ${current === 0 ? 'disabled' : ''}>‹</button>
+        `;
         for (let i = 0; i < total; i++) {
             html += `<button class="page-btn ${i === current ? 'active' : ''}" onclick="changePage(${i})">${i + 1}</button>`;
         }
-        html += `<button class="page-btn" onclick="changePage(${current + 1})" ${current >= total - 1 ? 'disabled' : ''}>›</button>`;
+        html += `
+                <button class="page-btn" onclick="changePage(${current + 1})" ${current >= total - 1 ? 'disabled' : ''}>›</button>
+                <span class="pagination-status">${page.totalPages ? `Trang ${currentPageDisplay}/${page.totalPages}` : 'Không có sản phẩm để phân trang'}</span>
+            </div>
+        `;
         el.innerHTML = html;
     }
 

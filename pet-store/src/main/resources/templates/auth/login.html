@@ -4,18 +4,11 @@
     <meta charset="UTF-8">
     <title>Đăng nhập</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" th:href="@{/css/customer.css(v=20260703)}">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-<header class="topbar">
-    <div class="topbar-inner">
-        <a class="brand" th:href="@{/}">Pet Store</a>
-        <nav class="nav">
-            <a th:href="@{/auth/login}">Đăng nhập</a>
-            <a th:href="@{/auth/register}">Đăng ký</a>
-        </nav>
-    </div>
-</header>
+<header th:replace="~{fragments/navigation :: customerHeader('')}"></header>
 
 <main class="auth-page">
 <section class="auth-panel">

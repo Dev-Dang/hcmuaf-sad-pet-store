@@ -11,6 +11,11 @@ public class HelloController {
         return "index";
     }
 
+    @GetMapping("/admin/")
+    public String adminHome() {
+        return "index";
+    }
+
     @GetMapping("/hello")
     public String helloPage() {
         return "index";

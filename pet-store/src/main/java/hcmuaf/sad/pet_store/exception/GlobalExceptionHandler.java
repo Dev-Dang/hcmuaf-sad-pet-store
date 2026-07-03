@@ -1,14 +1,12 @@
 package hcmuaf.sad.pet_store.exception;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.servlet.ModelAndView;
 
 import java.io.IOException;
 
@@ -17,12 +15,11 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    // Lỗi nghiệp vụ không được xử lý ở Controller (SystemException) — lưu message vào session, redirect sang GET /error (PRG)
+    // Lỗi nghiệp vụ không được xử lý tại Controller.
     @ExceptionHandler(AppException.class)
-    public String handleAppException(AppException ex, HttpServletRequest request) {
+    public ModelAndView handleAppException(AppException ex) {
         log.warn("AppException [{}]", ex.getErrorCode(), ex);
-        request.getSession().setAttribute("errorMessage", ex.getErrorCode().getMessage());
-        return "redirect:/error-page";
+        return errorView(ex.getErrorCode().getMessage());
     }
 
     // Static resource không tồn tại (favicon, devtools, v.v.) — 404 im lặng, không render template
@@ -31,11 +28,16 @@ public class GlobalExceptionHandler {
         response.sendError(HttpServletResponse.SC_NOT_FOUND);
     }
 
-    // Lỗi không xác định — log để debug, lưu message vào session, redirect sang GET /error
+    // Lỗi không xác định.
     @ExceptionHandler(Exception.class)
-    public String handleException(Exception ex, HttpServletRequest request) {
+    public ModelAndView handleException(Exception ex) {
         log.error("Unhandled exception", ex);
-        request.getSession().setAttribute("errorMessage", ErrorCode.SYSTEM_ERROR.getMessage());
-        return "redirect:/error-page";
+        return errorView(ErrorCode.SYSTEM_ERROR.getMessage());
+    }
+
+    private ModelAndView errorView(String message) {
+        ModelAndView view = new ModelAndView("error/generic");
+        view.addObject("errorMessage", message);
+        return view;
     }
 }

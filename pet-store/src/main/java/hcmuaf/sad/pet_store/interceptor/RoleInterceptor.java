@@ -12,7 +12,18 @@ public class RoleInterceptor implements HandlerInterceptor {
                              HttpServletResponse response,
                              Object handler) throws Exception {
         HttpSession session = request.getSession(false);
+        String userCode = (session != null) ? (String) session.getAttribute("userCode") : null;
         String role = (session != null) ? (String) session.getAttribute("role") : null;
+        String path = request.getRequestURI();
+
+        if (path.startsWith("/account/")) {
+            // [8.12.1-8.12.2] Redirect khi phiên đăng nhập Customer hết hạn
+            if (userCode == null || !"CUSTOMER".equals(role)) {
+                response.sendRedirect("/auth/login?expired=true");
+                return false;
+            }
+            return true;
+        }
 
         // Khu vực admin: yêu cầu role ADMIN
         if (!"ADMIN".equals(role)) {

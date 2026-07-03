@@ -39,8 +39,7 @@ public class RegisterController {
     @PostMapping("/auth/register")
     public String register(@Valid @ModelAttribute("registerRequest") RegisterRequest request,
                            BindingResult result,
-                           HttpSession session,
-                           Model model) {
+                           HttpSession session) {
 
         // [1.1.4] Kiểm tra tính hợp lệ của thông tin đăng ký
 
@@ -69,8 +68,7 @@ public class RegisterController {
             });
         } catch (BusinessException e) {
             // [1.3.1] Không tạo tài khoản, hiển thị lỗi Email đã được sử dụng
-            model.addAttribute("error", e.getErrorCode().getMessage());
-            model.addAttribute("registerRequest", new RegisterRequest());
+            result.rejectValue("email", "email.exists", e.getErrorCode().getMessage());
             return "auth/register";
         }
 

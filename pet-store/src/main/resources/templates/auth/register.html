@@ -3,31 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <title>Đăng ký</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
-<h2>Đăng ký tài khoản</h2>
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" th:href="@{/}">Pet Store</a>
+        <nav class="nav">
+            <a th:href="@{/auth/login}">Đăng nhập</a>
+            <a th:href="@{/auth/register}">Đăng ký</a>
+        </nav>
+    </div>
+</header>
+
+<main class="auth-page">
+<section class="auth-panel">
+<h1>Đăng ký tài khoản</h1>
 
 <form th:action="@{/auth/register}" th:object="${registerRequest}" method="post">
-    <div>
+    <div class="form-field">
         <label>Họ tên</label><br>
         <input type="text" th:field="*{displayName}">
-        <span th:if="${#fields.hasErrors('displayName')}" th:errors="*{displayName}" style="color:red"></span>
+        <span class="field-error" th:if="${#fields.hasErrors('displayName')}" th:errors="*{displayName}"></span>
     </div>
-    <div>
+    <div class="form-field">
         <label>Email</label><br>
         <input type="email" th:field="*{email}">
-        <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" style="color:red"></span>
+        <span class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
     </div>
-    <div>
+    <div class="form-field">
         <label>Mật khẩu</label><br>
         <input type="password" th:field="*{password}">
-        <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" style="color:red"></span>
+        <span class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
     </div>
-    <div>
+    <div class="actions">
         <button type="submit">Đăng ký</button>
     </div>
 </form>
 
 <p>Đã có tài khoản? <a th:href="@{/auth/login}">Đăng nhập</a></p>
+</section>
+</main>
 </body>
 </html>

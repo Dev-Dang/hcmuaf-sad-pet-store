@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Địa chỉ giao hàng</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" th:href="@{/}">Pet Store</a>
+        <nav class="nav">
+            <a th:href="@{/account/addresses}">Địa chỉ giao hàng</a>
+            <a th:if="${session.role == 'ADMIN'}" th:href="@{/admin/customers}">Quản lý khách hàng</a>
+            <form class="inline-form" th:action="@{/logout}" method="post">
+                <button class="secondary" type="submit">Đăng xuất</button>
+            </form>
+        </nav>
+    </div>
+</header>
+
+<main class="page stack">
+    <div class="actions">
+        <h1>Địa chỉ giao hàng</h1>
+        <a class="button" th:href="@{/account/addresses/new}">Thêm địa chỉ</a>
+    </div>
+
+    <div class="error" th:if="${error}" th:text="${error}"></div>
+
+    <section class="panel" th:if="${#lists.isEmpty(addresses)}">
+        <p>Bạn chưa có địa chỉ giao hàng nào.</p>
+    </section>
+
+    <section class="stack" th:unless="${#lists.isEmpty(addresses)}">
+    <article class="address-card" th:each="address : ${addresses}">
+        <div>
+            <strong th:text="${address.recipientName}">Nguyễn Văn A</strong>
+            <span th:if="${address.default}" class="default-label">(Mặc định)</span>
+        </div>
+        <p th:text="${address.phone}">0900000000</p>
+        <p th:text="${address.fullAddress}">Địa chỉ đầy đủ</p>
+        <p th:if="${address.addressDetail}" th:text="${address.addressDetail}">Chi tiết</p>
+
+        <div class="actions">
+            <a class="button secondary" th:href="@{/account/addresses/{id}/edit(id=${address.addressId})}">Sửa</a>
+            <form class="inline-form" th:if="${!address.default}" th:action="@{/account/addresses/{id}/default(id=${address.addressId})}" method="post">
+                <button class="secondary" type="submit" onclick="return confirm('Đặt địa chỉ này làm mặc định?')">Đặt mặc định</button>
+            </form>
+            <form class="inline-form" th:action="@{/account/addresses/{id}/delete(id=${address.addressId})}" method="post">
+                <button class="danger" type="submit" onclick="return confirm('Xóa địa chỉ này?')">Xóa</button>
+            </form>
+        </div>
+    </article>
+    </section>
+</main>
+</body>
+</html>

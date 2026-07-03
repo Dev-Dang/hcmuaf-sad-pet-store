@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${editMode} ? 'Sửa địa chỉ' : 'Thêm địa chỉ'">Địa chỉ giao hàng</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" th:href="@{/}">Pet Store</a>
+        <nav class="nav">
+            <a th:href="@{/account/addresses}">Địa chỉ giao hàng</a>
+            <a th:if="${session.role == 'ADMIN'}" th:href="@{/admin/customers}">Quản lý khách hàng</a>
+            <form class="inline-form" th:action="@{/logout}" method="post">
+                <button class="secondary" type="submit">Đăng xuất</button>
+            </form>
+        </nav>
+    </div>
+</header>
+
+<main class="page">
+<h1 th:text="${editMode} ? 'Sửa địa chỉ giao hàng' : 'Thêm địa chỉ giao hàng'">Địa chỉ giao hàng</h1>
+
+<form class="form-panel" th:action="${editMode} ? @{/account/addresses/{id}(id=${addressId})} : @{/account/addresses}"
+      th:object="${addressRequest}"
+      method="post">
+    <div class="form-field">
+        <label for="recipientName">Họ tên người nhận</label><br>
+        <input type="text" th:field="*{recipientName}">
+        <br><span class="field-error" th:if="${#fields.hasErrors('recipientName')}" th:errors="*{recipientName}"></span>
+    </div>
+
+    <div class="form-field">
+        <label for="phone">Số điện thoại</label><br>
+        <input type="tel" th:field="*{phone}">
+        <br><span class="field-error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></span>
+    </div>
+
+    <div class="form-field address-lookup">
+        <label for="addressKeyword">Địa chỉ giao hàng</label><br>
+        <input id="addressKeyword" type="text" th:value="*{fullAddress}" autocomplete="off"
+               placeholder="Nhập địa chỉ và chọn từ gợi ý">
+        <ul id="suggestions" hidden></ul>
+        <span class="field-error" th:if="${#fields.hasErrors('placeId')}" th:errors="*{placeId}"></span>
+    </div>
+
+    <div class="form-field">
+        <button id="useCurrentLocation" class="secondary" type="button">Dùng vị trí hiện tại</button>
+        <span id="lookupError" class="lookup-error"></span>
+    </div>
+
+    <input type="hidden" th:field="*{placeId}" id="placeId">
+    <input type="hidden" th:field="*{fullAddress}" id="fullAddress">
+
+    <div class="form-field">
+        <label for="addressDetail">Địa chỉ chi tiết</label><br>
+        <textarea th:field="*{addressDetail}"></textarea>
+        <br><span class="field-error" th:if="${#fields.hasErrors('addressDetail')}" th:errors="*{addressDetail}"></span>
+    </div>
+
+    <div class="actions">
+        <button type="submit">Lưu địa chỉ</button>
+        <a class="button secondary" th:href="@{/account/addresses}">Hủy</a>
+    </div>
+</form>
+</main>
+
+<script>
+    const keywordInput = document.getElementById('addressKeyword');
+    const suggestions = document.getElementById('suggestions');
+    const placeIdInput = document.getElementById('placeId');
+    const fullAddressInput = document.getElementById('fullAddress');
+    const lookupError = document.getElementById('lookupError');
+    const useCurrentLocation = document.getElementById('useCurrentLocation');
+    let lookupTimer;
+
+    keywordInput.addEventListener('input', () => {
+        clearTimeout(lookupTimer);
+        lookupError.textContent = '';
+        const keyword = keywordInput.value.trim();
+        placeIdInput.value = '';
+        fullAddressInput.value = '';
+        if (keyword.length < 3) {
+            suggestions.hidden = true;
+            suggestions.innerHTML = '';
+            return;
+        }
+        lookupTimer = setTimeout(() => loadSuggestions(keyword), 250);
+    });
+
+    useCurrentLocation.addEventListener('click', () => {
+        lookupError.textContent = '';
+        if (!navigator.geolocation) {
+            lookupError.textContent = 'Không thể xác định vị trí hiện tại. Vui lòng nhập địa chỉ thủ công.';
+            return;
+        }
+        useCurrentLocation.disabled = true;
+        useCurrentLocation.textContent = 'Đang xác định...';
+        navigator.geolocation.getCurrentPosition(async position => {
+            try {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const response = await fetch(`/account/addresses/reverse-geocode?lat=${lat}&lng=${lng}`);
+                const data = await response.json();
+                if (!data.result) {
+                    lookupError.textContent = 'Không tìm thấy địa chỉ phù hợp. Vui lòng thử lại.';
+                    return;
+                }
+                fillSelectedAddress(data.result);
+            } finally {
+                useCurrentLocation.disabled = false;
+                useCurrentLocation.textContent = 'Dùng vị trí hiện tại';
+            }
+        }, () => {
+            lookupError.textContent = 'Không thể xác định vị trí hiện tại. Vui lòng nhập địa chỉ thủ công.';
+            useCurrentLocation.disabled = false;
+            useCurrentLocation.textContent = 'Dùng vị trí hiện tại';
+        }, {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
+        });
+    });
+
+    async function loadSuggestions(keyword) {
+        const response = await fetch(`/account/addresses/autocomplete?keyword=${encodeURIComponent(keyword)}`);
+        if (!response.ok) {
+            lookupError.textContent = 'Không thể lấy gợi ý địa chỉ. Vui lòng thử lại.';
+            suggestions.hidden = true;
+            return;
+        }
+        const data = await response.json();
+        suggestions.innerHTML = '';
+        if (!data.predictions || data.predictions.length === 0) {
+            lookupError.textContent = 'Không tìm thấy địa chỉ phù hợp. Vui lòng thử lại.';
+            suggestions.hidden = true;
+            return;
+        }
+        data.predictions.forEach(prediction => {
+            const item = document.createElement('li');
+            item.textContent = prediction.description;
+            item.addEventListener('mousedown', event => event.preventDefault());
+            item.addEventListener('click', () => {
+                suggestions.hidden = true;
+                suggestions.innerHTML = '';
+                loadPlaceDetails(prediction.placeId);
+            });
+            suggestions.appendChild(item);
+        });
+        suggestions.hidden = false;
+    }
+
+    async function loadPlaceDetails(placeId) {
+        const response = await fetch(`/account/addresses/place-details?placeId=${encodeURIComponent(placeId)}`);
+        if (!response.ok) {
+            lookupError.textContent = 'Không tìm thấy địa chỉ phù hợp. Vui lòng thử lại.';
+            return;
+        }
+        fillSelectedAddress(await response.json());
+    }
+
+    function fillSelectedAddress(result) {
+        placeIdInput.value = result.placeId;
+        fullAddressInput.value = result.fullAddress;
+        keywordInput.value = result.fullAddress;
+        suggestions.innerHTML = '';
+        suggestions.hidden = true;
+        lookupError.textContent = '';
+    }
+</script>
+</body>
+</html>

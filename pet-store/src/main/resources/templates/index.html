@@ -3,20 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <title>Pet Store</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
-<h1>Chào mừng đến Pet Store</h1>
-<p>HCMUAF - System Analysis and Design (SAD) Project</p>
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" th:href="@{/}">Pet Store</a>
+        <nav class="nav">
+            <a th:if="${session.role == 'CUSTOMER'}" th:href="@{/account/addresses}">Địa chỉ giao hàng</a>
+            <a th:if="${session.role == 'ADMIN'}" th:href="@{/admin/customers}">Quản lý khách hàng</a>
+            <form th:if="${session.currentUser != null}" class="inline-form" th:action="@{/logout}" method="post">
+                <button class="secondary" type="submit">Đăng xuất</button>
+            </form>
+            <a th:unless="${session.currentUser != null}" th:href="@{/auth/login}">Đăng nhập</a>
+            <a th:unless="${session.currentUser != null}" th:href="@{/auth/register}">Đăng ký</a>
+        </nav>
+    </div>
+</header>
 
-<div th:if="${session.currentUser != null}">
-    <p>Xin chào, <strong th:text="${session.currentUser.displayName}"></strong>!</p>
-    <form th:action="@{/logout}" method="post">
-        <button type="submit">Đăng xuất</button>
-    </form>
-</div>
-<div th:unless="${session.currentUser != null}">
-    <a th:href="@{/auth/login}">Đăng nhập</a> |
-    <a th:href="@{/auth/register}">Đăng ký</a>
-</div>
+<main class="page">
+    <section class="panel stack">
+        <div>
+            <h1>Chào mừng đến Pet Store</h1>
+            <p>HCMUAF - System Analysis and Design (SAD) Project</p>
+        </div>
+
+        <div th:if="${session.currentUser != null}">
+            <p>Xin chào, <strong th:text="${session.currentUser.displayName}"></strong>!</p>
+            <p th:if="${session.role == 'CUSTOMER'}">
+                <a class="button" th:href="@{/account/addresses}">Quản lý địa chỉ giao hàng</a>
+            </p>
+            <p th:if="${session.role == 'ADMIN'}">
+                <a class="button" th:href="@{/admin/customers}">Quản lý khách hàng</a>
+            </p>
+        </div>
+    </section>
+</main>
 </body>
 </html>

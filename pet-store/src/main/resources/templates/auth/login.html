@@ -3,20 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <title>Đăng nhập</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-<h2>Đăng nhập</h2>
+<header class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" th:href="@{/}">Pet Store</a>
+        <nav class="nav">
+            <a th:href="@{/auth/login}">Đăng nhập</a>
+            <a th:href="@{/auth/register}">Đăng ký</a>
+        </nav>
+    </div>
+</header>
+
+<main class="auth-page">
+<section class="auth-panel">
+<h1>Đăng nhập</h1>
 
 <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
 <form th:action="@{/login/email}" th:object="${loginRequest}" method="post">
-    <div>
+    <div class="form-field">
         <label>Email</label>
         <input type="email" th:field="*{email}" />
         <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
     </div>
-    <div>
+    <div class="form-field">
         <label>Mật khẩu</label>
         <input type="password" th:field="*{password}" />
         <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
@@ -38,5 +51,7 @@ function handleGoogleSignIn(response) {
 </script>
 
 <p>Chưa có tài khoản? <a th:href="@{/auth/register}">Đăng ký</a></p>
+</section>
+</main>
 </body>
 </html>

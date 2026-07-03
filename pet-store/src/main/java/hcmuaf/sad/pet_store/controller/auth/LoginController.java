@@ -28,6 +28,14 @@ public class LoginController {
         this.googleAuthProvider = new GoogleAuthProvider();
     }
 
+    @ModelAttribute
+    public void initLoginModel(Model model) {
+        if (!model.containsAttribute("loginRequest")) {
+            model.addAttribute("loginRequest", new LoginRequest());
+        }
+        model.addAttribute("googleClientId", GoogleOAuthConfig.getClientId());
+    }
+
     @GetMapping("/auth/login")
     public String showLogin(HttpSession session,
                             Model model,
@@ -40,9 +48,7 @@ public class LoginController {
         }
 
         // [2.1.2 / 3.1.2] Hiển thị form đăng nhập
-        model.addAttribute("loginRequest", new LoginRequest());
-        model.addAttribute("googleClientId", GoogleOAuthConfig.getClientId());
-        if (expired) {
+        if (expired && !model.containsAttribute("error")) {
             model.addAttribute("error", "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.");
         }
         return "auth/login";
@@ -119,7 +125,6 @@ public class LoginController {
         } catch (BusinessException e) {
             // [3.5.1 / 3.6.1] Hiển thị lỗi Đăng nhập Google không thành công
             model.addAttribute("error", e.getErrorCode().getMessage());
-            model.addAttribute("loginRequest", new LoginRequest());
             return "auth/login";
         }
 
@@ -130,6 +135,6 @@ public class LoginController {
         String destination = resolveDestination(redirectUrl, authUser.getRole());
 
         // [3.1.10] Điều hướng Actor đến trang đích
-        return "redirect:" + resolveDestination(redirectUrl, authUser.getRole());
+        return "redirect:" + destination;
     }
 }

@@ -4,7 +4,6 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
-import hcmuaf.sad.pet_store.config.GoogleOAuthConfig;
 import hcmuaf.sad.pet_store.dto.auth.GoogleCredential;
 import hcmuaf.sad.pet_store.exception.BusinessException;
 import hcmuaf.sad.pet_store.exception.ErrorCode;
@@ -17,20 +16,25 @@ import hcmuaf.sad.pet_store.model.enums.ProviderType;
 import hcmuaf.sad.pet_store.model.enums.UserRole;
 import hcmuaf.sad.pet_store.util.BusinessKeyGenerator;
 import hcmuaf.sad.pet_store.util.DBUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.Collections;
+import java.util.List;
 
+@Component
 public class GoogleAuthProvider implements AuthProvider<GoogleCredential> {
 
     private final GoogleIdTokenVerifier verifier;
 
-    public GoogleAuthProvider() {
-        this.verifier = new GoogleIdTokenVerifier.Builder(
-                new NetHttpTransport(),
-                GsonFactory.getDefaultInstance())
-                .setAudience(Collections.singletonList(GoogleOAuthConfig.getClientId()))
+    public GoogleAuthProvider(@Value("${google.client-id:}") String clientId) {
+        NetHttpTransport httpTransport = new NetHttpTransport();
+        GsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+        List<String> acceptedClientIds = List.of(clientId);
+
+        this.verifier = new GoogleIdTokenVerifier.Builder(httpTransport, jsonFactory)
+                .setAudience(acceptedClientIds)
                 .build();
     }
 

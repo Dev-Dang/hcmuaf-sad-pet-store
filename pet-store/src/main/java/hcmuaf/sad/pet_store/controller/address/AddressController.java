@@ -5,9 +5,6 @@ import hcmuaf.sad.pet_store.exception.BusinessException;
 import hcmuaf.sad.pet_store.exception.ErrorCode;
 import hcmuaf.sad.pet_store.mapper.AddressMapper;
 import hcmuaf.sad.pet_store.model.ShippingAddress;
-import hcmuaf.sad.pet_store.model.enums.EntityType;
-import hcmuaf.sad.pet_store.util.BusinessKeyGenerator;
-import hcmuaf.sad.pet_store.util.DBUtils;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
@@ -22,21 +19,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.math.BigDecimal;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 @Controller
 @RequestMapping("/account/addresses")
 public class AddressController {
-    private final GoongMap goongMap;
+    private final MapProvider mapProvider;
 
-    public AddressController() {
-        this.goongMap = new GoongMap();
+    public AddressController(MapProvider mapProvider) {
+        this.mapProvider = mapProvider;
     }
 
     @GetMapping
     public String listAddresses(HttpSession session, Model model) {
-        String userCode = currentUserCode(session);
+        String userCode = (String) session.getAttribute("userCode");
 
         // [8.1.2] Truy xuất danh sách địa chỉ của Customer
         var addresses = ShippingAddress.findAllByUserCode(userCode);
@@ -57,14 +54,14 @@ public class AddressController {
     @ResponseBody
     public Map<String, Object> autocomplete(@RequestParam("keyword") String keyword) {
         // [8.6.4] Gửi từ khóa lấy gợi ý địa chỉ
-        return Map.of("predictions", goongMap.autocomplete(keyword));
+        return Map.of("predictions", mapProvider.autocomplete(keyword));
     }
 
     @GetMapping("/place-details")
     @ResponseBody
-    public GoongMap.PlaceResult placeDetails(@RequestParam("placeId") String placeId) {
+    public MapPlaceResult placeDetails(@RequestParam("placeId") String placeId) {
         // [8.6.6] Lấy địa chỉ đầy đủ và tọa độ theo mã địa điểm
-        return goongMap.placeDetails(placeId);
+        return mapProvider.placeDetails(placeId);
     }
 
     @GetMapping("/reverse-geocode")
@@ -72,7 +69,10 @@ public class AddressController {
     public Map<String, Object> reverseGeocode(@RequestParam("lat") BigDecimal latitude,
                                               @RequestParam("lng") BigDecimal longitude) {
         // [8.7.4] Gửi tọa độ lấy địa chỉ tương ứng
-        return Collections.singletonMap("result", goongMap.reverseGeocode(latitude, longitude));
+        MapPlaceResult result = mapProvider.reverseGeocode(latitude, longitude);
+        Map<String, Object> response = new HashMap<>();
+        response.put("result", result);
+        return response;
     }
 
     @PostMapping
@@ -80,7 +80,7 @@ public class AddressController {
                                 BindingResult bindingResult,
                                 HttpSession session,
                                 Model model) {
-        String userCode = currentUserCode(session);
+        String userCode = (String) session.getAttribute("userCode");
 
         // [8.2.3] Kiểm tra dữ liệu hợp lệ
         if (bindingResult.hasErrors()) {
@@ -88,27 +88,21 @@ public class AddressController {
             return "account/address-form";
         }
 
-        GoongMap.PlaceResult placeResult;
+        MapPlaceResult placeResult;
         try {
             // [8.2.3] Xác định lại tọa độ theo placeId
-            placeResult = goongMap.placeDetails(request.getPlaceId());
+            placeResult = mapProvider.placeDetails(request.getPlaceId());
         } catch (BusinessException e) {
             bindingResult.rejectValue("placeId", "address.coords", e.getErrorCode().getMessage());
             prepareForm(model, request, false, null);
             return "account/address-form";
         }
 
-        // [8.2.4] Kiểm tra Customer đã có địa chỉ nào chưa
-        boolean isDefault = ShippingAddress.findAllByUserCode(userCode).isEmpty();
-
         // [8.2.4] Chuẩn bị dữ liệu địa chỉ mới
-        ShippingAddress address = buildAddress(request, placeResult);
-        address.setAddressId(BusinessKeyGenerator.next(EntityType.ADDRESS));
-        address.setUserCode(userCode);
-        address.setDefault(isDefault);
+        ShippingAddress address = AddressMapper.toModel(request, placeResult);
 
         // [8.2.4] Lưu địa chỉ giao hàng mới
-        DBUtils.tx().executeWithoutResult(status -> address.insert());
+        address.createForUser(userCode);
         return "redirect:/account/addresses";
     }
 
@@ -116,10 +110,10 @@ public class AddressController {
     public String showEditForm(@PathVariable String addressId,
                                HttpSession session,
                                Model model) {
-        String userCode = currentUserCode(session);
+        String userCode = (String) session.getAttribute("userCode");
 
         // [8.3.1] Truy xuất chi tiết địa chỉ được chọn
-        ShippingAddress address = requireAddressOwnedByUser(addressId, userCode);
+        ShippingAddress address = ShippingAddress.findByAddressIdAndUserCode(addressId, userCode);
 
         // Chuẩn bị dữ liệu form
         prepareForm(model, AddressMapper.toRequest(address), true, addressId);
@@ -134,8 +128,8 @@ public class AddressController {
                                 BindingResult bindingResult,
                                 HttpSession session,
                                 Model model) {
-        String userCode = currentUserCode(session);
-        ShippingAddress current = requireAddressOwnedByUser(addressId, userCode);
+        String userCode = (String) session.getAttribute("userCode");
+        ShippingAddress current = ShippingAddress.findByAddressIdAndUserCode(addressId, userCode);
 
         // [8.3.4] Kiểm tra dữ liệu hợp lệ
         if (bindingResult.hasErrors()) {
@@ -143,17 +137,17 @@ public class AddressController {
             return "account/address-form";
         }
 
-        GoongMap.PlaceResult placeResult;
+        MapPlaceResult placeResult;
         try {
             // [8.3.4] Xác định lại tọa độ theo placeId
-            placeResult = goongMap.placeDetails(request.getPlaceId());
+            placeResult = getPlaceResult(request, current);
         } catch (BusinessException e) {
             bindingResult.rejectValue("placeId", "address.coords", e.getErrorCode().getMessage());
             prepareForm(model, request, true, addressId);
             return "account/address-form";
         }
 
-        ShippingAddress updated = buildAddress(request, placeResult);
+        ShippingAddress updated = AddressMapper.toModel(request, placeResult);
         updated.setAddressId(addressId);
         updated.setUserCode(userCode);
         updated.setDefault(current.isDefault());
@@ -167,54 +161,49 @@ public class AddressController {
     public String deleteAddress(@PathVariable String addressId,
                                 HttpSession session,
                                 Model model) {
-        String userCode = currentUserCode(session);
+        String userCode = (String) session.getAttribute("userCode");
 
         // [8.4.3] Kiểm tra địa chỉ được chọn có phải mặc định không
-        ShippingAddress address = requireAddressOwnedByUser(addressId, userCode);
-        if (address.isDefault()) {
+        ShippingAddress address = ShippingAddress.findByAddressIdAndUserCode(addressId, userCode);
+        try {
+            // [8.4.4] Xóa mềm địa chỉ được chọn
+            address.softDelete();
+        } catch (BusinessException e) {
             model.addAttribute("addresses", AddressMapper.toDtoList(ShippingAddress.findAllByUserCode(userCode)));
-            model.addAttribute("error", ErrorCode.ADDRESS_IS_DEFAULT.getMessage());
+            model.addAttribute("error", e.getErrorCode().getMessage());
             return "account/addresses";
         }
 
-        // [8.4.4] Xóa mềm địa chỉ được chọn
-        address.softDelete();
         return "redirect:/account/addresses";
     }
 
     @PostMapping("/{addressId}/default")
     public String setDefaultAddress(@PathVariable String addressId,
-                                    HttpSession session) {
-        String userCode = currentUserCode(session);
-        requireAddressOwnedByUser(addressId, userCode);
+                                    HttpSession session,
+                                    Model model) {
+        String userCode = (String) session.getAttribute("userCode");
+        ShippingAddress address = ShippingAddress.findByAddressIdAndUserCode(addressId, userCode);
 
-        // [8.5.3] Cập nhật cờ mặc định để chỉ có đúng một địa chỉ mặc định
-        ShippingAddress.updateDefaultAddress(userCode, addressId);
+        try {
+            // [8.5.3] Cập nhật cờ mặc định để chỉ có đúng một địa chỉ mặc định
+            address.setAsDefault();
+        } catch (BusinessException e) {
+            model.addAttribute("addresses", AddressMapper.toDtoList(ShippingAddress.findAllByUserCode(userCode)));
+            model.addAttribute("error", e.getErrorCode().getMessage());
+            return "account/addresses";
+        }
         return "redirect:/account/addresses";
     }
 
-    private ShippingAddress buildAddress(AddressRequest request, GoongMap.PlaceResult placeResult) {
-        ShippingAddress address = new ShippingAddress();
-        address.setRecipientName(request.getRecipientName());
-        address.setPhone(request.getPhone());
-        address.setPlaceId(placeResult.placeId());
-        address.setFullAddress(placeResult.fullAddress());
-        address.setAddressDetail(request.getAddressDetail());
-        address.setLatitude(placeResult.latitude());
-        address.setLongitude(placeResult.longitude());
-        return address;
-    }
-
-    private ShippingAddress requireAddressOwnedByUser(String addressId, String userCode) {
-        ShippingAddress address = ShippingAddress.findByAddressId(addressId);
-        if (address == null || !address.belongsTo(userCode)) {
-            throw new BusinessException(ErrorCode.ADDRESS_NOT_FOUND);
+    private MapPlaceResult getPlaceResult(AddressRequest request, ShippingAddress current) {
+        if (current.getPlaceId().equals(request.getPlaceId())) {
+            return new MapPlaceResult(
+                    current.getPlaceId(),
+                    current.getFullAddress(),
+                    current.getLatitude(),
+                    current.getLongitude());
         }
-        return address;
-    }
-
-    private String currentUserCode(HttpSession session) {
-        return (String) session.getAttribute("userCode");
+        return mapProvider.placeDetails(request.getPlaceId());
     }
 
     private void prepareForm(Model model, AddressRequest request, boolean editMode, String addressId) {

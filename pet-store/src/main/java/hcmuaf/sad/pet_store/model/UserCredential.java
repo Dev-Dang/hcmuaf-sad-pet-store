@@ -92,8 +92,14 @@ public class UserCredential {
     }
 
     public void updateSecretHash(String hash) {
-        // TODO: UC-4
-        throw new UnsupportedOperationException("TODO: UC-4");
+        try {
+            DBUtils.jdbc().update(
+                    "UPDATE user_credential SET secret_hash = ? WHERE id = ?",
+                    hash, id);
+            this.secretHash = hash;
+        } catch (DataAccessException e) {
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
+        }
     }
 
     public void delete() {

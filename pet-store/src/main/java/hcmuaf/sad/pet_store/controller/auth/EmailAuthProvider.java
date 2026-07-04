@@ -8,7 +8,9 @@ import hcmuaf.sad.pet_store.model.enums.ProviderType;
 import hcmuaf.sad.pet_store.util.PasswordUtils;
 import hcmuaf.sad.pet_store.exception.BusinessException;
 import hcmuaf.sad.pet_store.exception.ErrorCode;
+import org.springframework.stereotype.Component;
 
+@Component
 public class EmailAuthProvider implements AuthProvider<EmailCredential> {
 
     @Override

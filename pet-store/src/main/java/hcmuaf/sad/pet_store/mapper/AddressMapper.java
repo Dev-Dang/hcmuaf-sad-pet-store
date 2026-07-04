@@ -2,6 +2,7 @@ package hcmuaf.sad.pet_store.mapper;
 
 import hcmuaf.sad.pet_store.dto.request.AddressRequest;
 import hcmuaf.sad.pet_store.dto.response.AddressDto;
+import hcmuaf.sad.pet_store.controller.address.MapPlaceResult;
 import hcmuaf.sad.pet_store.model.ShippingAddress;
 
 import java.util.List;
@@ -34,5 +35,17 @@ public class AddressMapper {
         request.setFullAddress(address.getFullAddress());
         request.setAddressDetail(address.getAddressDetail());
         return request;
+    }
+
+    public static ShippingAddress toModel(AddressRequest request, MapPlaceResult placeResult) {
+        ShippingAddress address = new ShippingAddress();
+        address.setRecipientName(request.getRecipientName());
+        address.setPhone(request.getPhone());
+        address.setPlaceId(placeResult.getPlaceId());
+        address.setFullAddress(placeResult.getFullAddress());
+        address.setAddressDetail(request.getAddressDetail());
+        address.setLatitude(placeResult.getLatitude());
+        address.setLongitude(placeResult.getLongitude());
+        return address;
     }
 }

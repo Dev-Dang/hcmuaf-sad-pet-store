@@ -14,6 +14,7 @@
 <section class="auth-panel">
 <h1>Đăng nhập</h1>
 
+<div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
 <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
 <form th:action="@{/login/email}" th:object="${loginRequest}" method="post">
@@ -43,6 +44,7 @@ function handleGoogleSignIn(response) {
 }
 </script>
 
+<p><a th:href="@{/auth/forgot-password}">Quên mật khẩu?</a></p>
 <p>Chưa có tài khoản? <a th:href="@{/auth/register}">Đăng ký</a></p>
 </section>
 </main>

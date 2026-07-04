@@ -1,5 +1,7 @@
 package hcmuaf.sad.pet_store.uc8;
 
+import hcmuaf.sad.pet_store.exception.BusinessException;
+import hcmuaf.sad.pet_store.exception.ErrorCode;
 import hcmuaf.sad.pet_store.model.ShippingAddress;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,8 +11,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -33,6 +37,35 @@ class ShippingAddressTest {
         assertThat(found.isDefault()).isTrue();
         assertThat(found.isCurrent()).isTrue();
         assertThat(found.isDeleted()).isFalse();
+    }
+
+    @Test
+    void createForUser_firstAddress_shouldCreateDefaultAddress() {
+        ShippingAddress address = sampleAddress(null, null, false);
+
+        // [8.2.4] Lưu địa chỉ đầu tiên và tự đặt mặc định
+        address.createForUser("KHG-UC8-FIRST");
+
+        List<ShippingAddress> addresses = ShippingAddress.findAllByUserCode("KHG-UC8-FIRST");
+        assertThat(addresses).hasSize(1);
+        assertThat(addresses.get(0).getAddressId()).isNotBlank();
+        assertThat(addresses.get(0).isDefault()).isTrue();
+    }
+
+    @Test
+    void createForUser_secondAddress_shouldNotCreateDefaultAddress() {
+        ShippingAddress first = sampleAddress(null, null, false);
+        ShippingAddress second = sampleAddress(null, null, false);
+        first.createForUser("KHG-UC8-SECOND");
+
+        // [8.2.4] Customer đã có địa chỉ nên địa chỉ sau không tự là mặc định
+        second.createForUser("KHG-UC8-SECOND");
+
+        List<ShippingAddress> addresses = ShippingAddress.findAllByUserCode("KHG-UC8-SECOND");
+        long defaultCount = addresses.stream().filter(ShippingAddress::isDefault).count();
+        assertThat(addresses).hasSize(2);
+        assertThat(defaultCount).isEqualTo(1);
+        assertThat(addresses).anyMatch(address -> !address.isDefault());
     }
 
     @Test
@@ -80,14 +113,26 @@ class ShippingAddressTest {
     }
 
     @Test
-    void updateDefaultAddress_shouldSwitchDefaultWithoutCreatingNewVersion() {
+    void softDelete_defaultAddress_shouldBeBlockedByModel() {
+        ShippingAddress address = sampleAddress("DCH-0000006", "KHG-0000006", true);
+        address.insert();
+
+        // [8.4.3] Không cho xóa địa chỉ mặc định
+        assertThatThrownBy(address::softDelete)
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.ADDRESS_IS_DEFAULT);
+    }
+
+    @Test
+    void setAsDefault_shouldSwitchDefaultWithoutCreatingNewVersion() {
         ShippingAddress first = sampleAddress("DCH-0000004", "KHG-0000004", true);
         ShippingAddress second = sampleAddress("DCH-0000005", "KHG-0000004", false);
         first.insert();
         second.insert();
 
         // [8.5.3] Cập nhật cờ mặc định để chỉ có đúng một địa chỉ mặc định
-        ShippingAddress.updateDefaultAddress("KHG-0000004", "DCH-0000005");
+        second.setAsDefault();
 
         Integer defaultRows = jdbcTemplate.queryForObject("""
                 SELECT COUNT(*) FROM shipping_addresses

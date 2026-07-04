@@ -2,6 +2,8 @@ package hcmuaf.sad.pet_store.uc5;
 
 import hcmuaf.sad.pet_store.controller.auth.LoginController;
 import hcmuaf.sad.pet_store.controller.auth.LogoutController;
+import hcmuaf.sad.pet_store.dto.auth.EmailCredential;
+import hcmuaf.sad.pet_store.dto.auth.GoogleCredential;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpSession;
@@ -25,7 +27,10 @@ class LogoutControllerTest {
     void setUp() {
         logoutMockMvc = MockMvcBuilders.standaloneSetup(new LogoutController())
                 .build();
-        loginMockMvc = MockMvcBuilders.standaloneSetup(new LoginController())
+        loginMockMvc = MockMvcBuilders.standaloneSetup(new LoginController(
+                        (EmailCredential credential) -> null,
+                        (GoogleCredential credential) -> null,
+                        "test-google-client-id"))
                 .build();
     }
 
@@ -77,6 +82,7 @@ class LogoutControllerTest {
         loginMockMvc.perform(get("/auth/login").param("expired", "true"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("auth/login"))
+                .andExpect(model().attribute("googleClientId", "test-google-client-id"))
                 .andExpect(model().attribute("error", "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại."));
     }
 }

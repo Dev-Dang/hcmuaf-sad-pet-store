@@ -1,6 +1,5 @@
 package hcmuaf.sad.pet_store.controller.auth;
 
-import hcmuaf.sad.pet_store.config.GoogleOAuthConfig;
 import hcmuaf.sad.pet_store.dto.auth.EmailCredential;
 import hcmuaf.sad.pet_store.dto.auth.GoogleCredential;
 import hcmuaf.sad.pet_store.dto.request.LoginRequest;
@@ -9,6 +8,7 @@ import hcmuaf.sad.pet_store.model.enums.UserRole;
 import hcmuaf.sad.pet_store.model.policy.SessionPolicy;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -22,10 +22,14 @@ public class LoginController {
 
     private final AuthProvider<EmailCredential> emailAuthProvider;
     private final AuthProvider<GoogleCredential> googleAuthProvider;
+    private final String googleClientId;
 
-    public LoginController() {
-        this.emailAuthProvider = new EmailAuthProvider();
-        this.googleAuthProvider = new GoogleAuthProvider();
+    public LoginController(AuthProvider<EmailCredential> emailAuthProvider,
+                           AuthProvider<GoogleCredential> googleAuthProvider,
+                           @Value("${google.client-id:}") String googleClientId) {
+        this.emailAuthProvider = emailAuthProvider;
+        this.googleAuthProvider = googleAuthProvider;
+        this.googleClientId = googleClientId;
     }
 
     @ModelAttribute
@@ -33,7 +37,7 @@ public class LoginController {
         if (!model.containsAttribute("loginRequest")) {
             model.addAttribute("loginRequest", new LoginRequest());
         }
-        model.addAttribute("googleClientId", GoogleOAuthConfig.getClientId());
+        model.addAttribute("googleClientId", googleClientId);
     }
 
     @GetMapping("/auth/login")

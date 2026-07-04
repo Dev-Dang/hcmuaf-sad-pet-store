@@ -82,4 +82,13 @@ public class Order extends BaseEntity {
         PaymentStatus(String label) { this.label = label; }
         public String getLabel() { return label; }
     }
+    @OneToMany(mappedBy = "order",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY)
+    private List<ReturnRequest> returnRequests;
+
+    @OneToMany(mappedBy = "order",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY)
+    private List<OrderStatusHistory> statusHistories;
 }
